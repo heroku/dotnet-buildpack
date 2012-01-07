@@ -37,7 +37,7 @@ fi
 
 # install XSP if needed
 if [ ! -d "xsp" ]; then
-  echo "-----> Bundling XSP v$XSP_PACKAGE"
+  echo "-----> Bundling XSP v$XSP_VERSION"
   curl --silent --max-time 60 --location $XSP_PACKAGE | tar xz
 
   # copy XSP DLLs into the GAC
