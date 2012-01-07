@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir>
+
+# fail fast
+set -e
+
+mktmpdir() {
+  dir=$(mktemp -t node-$1-XXXX)
+  rm -rf $dir
+  mkdir -p $dir
+  echo $dir
+}
+
+function indent() {
+  c='s/^/       /'
+  case $(uname) in
+    Darwin) sed -l "$c";;
+    *)      sed -u "$c";;
+  esac
+}
+
+# config
+MONO_VERSION="2.10.8"
+XSP_VERSION="2.10.2"
+
+# s3 packages
+MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/mono-${MONO_VERSION}.tgz"
+XSP_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/xsp-${XSP_VERSION}.tgz"
+
+cd /app
+
+# install Mono if needed
+if [ ! -d "mono" ]; then
+  echo "-----> Bundling Mono v$MONO_VERSION"
+  curl --silent --max-time 60 --location $MONO_PACKAGE | tar xz
+fi
+
+# install XSP if needed
+if [ ! -d "xsp" ]; then
+  echo "-----> Bundling XSP v$XSP_PACKAGE"
+  curl --silent --max-time 60 --location $XSP_PACKAGE | tar xz
+
+  # copy XSP DLLs into the GAC
+  cp -r xsp/lib/mono/gac/* mono/lib/mono/gac/
+fi

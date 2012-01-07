@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# bin/detect <build-dir>
+
+if [ -f "$( find . -maxdepth 2 -iname global.asax )" ]; then
+  echo "ASP.NET" && exit 0
+else
+  echo "no" && exit 1
+fi
