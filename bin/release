@@ -6,5 +6,5 @@ cat <<EOF
 config_vars:
   PATH: /app/mono/bin:/app/xsp/bin:/usr/local/bin:/usr/bin:/bin
 default_process_types:
-  web: /app/xsp/bin/xsp4 --port \$PORT
+  web: /app/xsp/bin/xsp4 --nonstop --port \$PORT
 EOF
