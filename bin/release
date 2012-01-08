@@ -5,14 +5,13 @@
 BUILD_DIR=$1
 
 # try to find a suitable directory to start the app from
-WEB_ROOT=${BUILD_DIR}
+WEB_ROOT="."
 if [ ! -f "${BUILD_DIR}/bin" ]; then
   # assume there's only one .sln because we check for that in compile
   SLN=$(find "$BUILD_DIR" -maxdepth 1 -iname "*.sln")
-  SLN_DIR="${SLN%%.sln}"
-  SLN_DIR="${SLN%%.SLN}"
-  if [ -f "${SLN}" ]; then
-    WEB_ROOT=$SLN_DIR
+  SLN="${SLN%%\.[sS][lL][nN]}"
+  if [ -d "${BUILD_DIR}/${SLN}" ]; then
+    WEB_ROOT=$SLN
   fi
 fi
 
