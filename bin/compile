@@ -51,7 +51,7 @@ if [ ! -d "${CACHE_DIR}/xsp" ]; then
 fi
 cp -r "${CACHE_DIR}/xsp" .
 
-# Find a solution file
+# find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
 if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
   echo "-----> Too many *.sln files" 1>&2
@@ -60,6 +60,10 @@ fi
 
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
-  export PATH="${BUILD_DIR}/mono/bin:${PATH}"
-  xbuild /property:Configuration=Release ${SLN} | indent
+
+  # need Mono in its expected location for xbuild to work
+  cp -r "${CACHE_DIR}/mono" /app
+  export PATH="/app/mono/bin:${PATH}"
+
+  xbuild /property:Configuration=Release ${SLN}
 fi
