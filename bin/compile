@@ -60,5 +60,5 @@ fi
 
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
-  xbuild /property:Configuration=Release ${SLN}
+  mono/bin/xbuild /property:Configuration=Release ${SLN}
 fi
