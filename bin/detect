@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # bin/detect <build-dir>
 
-if [ "$( find $1 -maxdepth 1 -iname '*.sln' )" -gt 0 ]; then
+if [ $( find $1 -maxdepth 1 -iname '*.sln' | wc -l ) -gt 0 ]; then
   echo "ASP.NET" && exit 0
 else
   echo "no" && exit 1
