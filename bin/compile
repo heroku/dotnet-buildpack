@@ -51,3 +51,14 @@ if [ ! -d "${CACHE_DIR}/xsp" ]; then
 fi
 cp -r "${CACHE_DIR}/xsp" .
 
+# Find a solution file
+SLN=$(find . -maxdepth 1 -iname "*.sln")
+if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
+  echo "-----> Too many *.sln files" 1>&2
+  exit 1
+fi
+
+if [ "${SLN}" != "" ]; then
+  echo "-----> Compiling Mono application"
+  xbuild /property:Configuration=Release ${SLN}
+fi
