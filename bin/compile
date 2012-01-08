@@ -66,7 +66,7 @@ if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
 
   # need Mono in its expected location for xbuild to work
-  cp -r "${CACHE_DIR}/mono" /app
+  ln -s "${CACHE_DIR}/mono" /app
   export PATH="/app/mono/bin:${PATH}"
 
   xbuild /property:Configuration=Release ${SLN} | indent
