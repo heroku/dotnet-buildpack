@@ -35,13 +35,13 @@ cd $BUILD_DIR
 
 echo "-----> Bundling Mono v$MONO_VERSION"
 if [ ! -d "${CACHE_DIR}/mono" ]; then
-  curl --silent --max-time 60 --location ${MONO_PACKAGE} | tar xz - -C ${CACHE_DIR}
+  curl --silent --max-time 60 -o - | tar xz - -C ${CACHE_DIR}
 fi
 cp -r "${CACHE_DIR}/mono" .
 
 echo "-----> Bundling XSP v$XSP_VERSION"
 if [ ! -d "${CACHE_DIR}/xsp" ]; then
-  curl --silent --max-time 60 --location ${XSP_PACKAGE} | tar xz - -C ${CACHE_DIR}
+  curl --silent --max-time 60 -o - | tar xz - -C ${CACHE_DIR}
 
   # copy XSP DLLs into the GAC
   cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
