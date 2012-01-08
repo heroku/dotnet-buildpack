@@ -8,11 +8,15 @@ BUILD_DIR=$1
 WEB_ROOT="."
 if [ ! -f "${BUILD_DIR}/bin" ]; then
   # assume there's only one .sln because we check for that in compile
-  SLN=$(find "$BUILD_DIR" -maxdepth 1 -iname "*.sln")
-  SLN=".${SLN##$BUILD_DIR}"
+  SLN=$( find "$BUILD_DIR" -maxdepth 1 -iname "*.sln" )
+
+  SLN="${SLN##$BUILD_DIR}"
+  SLN="${SLN##\.}"
+  SLN="${SLN##\/}"
   SLN="${SLN%%\.[sS][lL][nN]}"
+
   if [ -d "${BUILD_DIR}/${SLN}" ]; then
-    WEB_ROOT=$SLN
+    WEB_ROOT=/app/$SLN
   fi
 fi
 
