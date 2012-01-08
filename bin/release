@@ -1,10 +1,24 @@
 #!/usr/bin/env bash
 # bin/release <build-dir>
 
+# important directories: https://gist.github.com/fe7f04abbd9538b656c5
+BUILD_DIR=$1
+
+# try to find a suitable directory to start the app from
+WEB_ROOT=${BUILD_DIR}
+if [ ! -f "${BUILD_DIR}/bin" ]; then
+  SLN=$(find . -maxdepth 1 -iname "*.sln")
+  SLN_DIR=${SLN%%.sln}
+  SLN_DIR=${SLN%%.SLN}
+  if [ -f "${SLN}" ]; then
+    WEB_ROOT=$SLN_DIR
+  fi
+fi
+
 cat <<EOF
 ---
 config_vars:
   PATH: /app/mono/bin:/app/xsp/bin:/usr/local/bin:/usr/bin:/bin
 default_process_types:
-  web: /app/xsp/bin/xsp4 --nonstop --port \$PORT
+  web: /app/xsp/bin/xsp4 --nonstop --port \$PORT --root $WEB_ROOT
 EOF
