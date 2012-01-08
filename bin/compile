@@ -4,6 +4,9 @@
 # fail fast
 set -e
 
+# if any command in a pipe fails, kill the script (useful for indent)
+set -o pipefail
+
 mktmpdir() {
   dir=$(mktemp -t node-$1-XXXX)
   rm -rf $dir
@@ -58,6 +61,7 @@ if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
   exit 1
 fi
 
+# compile an uploaded application
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
 
@@ -65,5 +69,5 @@ if [ "${SLN}" != "" ]; then
   cp -r "${CACHE_DIR}/mono" /app
   export PATH="/app/mono/bin:${PATH}"
 
-  xbuild /property:Configuration=Release ${SLN}
+  xbuild /property:Configuration=Release ${SLN} | indent
 fi
