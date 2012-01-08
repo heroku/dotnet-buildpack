@@ -27,19 +27,24 @@ XSP_VERSION="2.10.2"
 MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/mono-${MONO_VERSION}.tgz"
 XSP_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/xsp-${XSP_VERSION}.tgz"
 
-cd /app
+# important directories: https://gist.github.com/fe7f04abbd9538b656c5
+BUILD_DIR=$1
+CACHE_DIR=$2
 
-# install Mono if needed
-if [ ! -d "mono" ]; then
-  echo "-----> Bundling Mono v$MONO_VERSION"
-  curl --silent --max-time 60 --location $MONO_PACKAGE | tar xz
+cd $BUILD_DIR
+
+echo "-----> Bundling Mono v$MONO_VERSION"
+if [ ! -d "${CACHE_DIR}/mono" ]; then
+  curl --silent --max-time 60 --location ${MONO_PACKAGE} | tar xz - -C ${CACHE_DIR}
 fi
+cp -r "${CACHE_DIR}/mono" .
 
-# install XSP if needed
-if [ ! -d "xsp" ]; then
-  echo "-----> Bundling XSP v$XSP_VERSION"
-  curl --silent --max-time 60 --location $XSP_PACKAGE | tar xz
+echo "-----> Bundling XSP v$XSP_VERSION"
+if [ ! -d "${CACHE_DIR}/xsp" ]; then
+  curl --silent --max-time 60 --location ${XSP_PACKAGE} | tar xz - -C ${CACHE_DIR}
 
   # copy XSP DLLs into the GAC
-  cp -r xsp/lib/mono/gac/* mono/lib/mono/gac/
+  cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
 fi
+cp -r "${CACHE_DIR}/xsp" .
+
