@@ -31,7 +31,10 @@ XSP_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/xsp-${XSP_VERSION}.t
 BUILD_DIR=$1
 CACHE_DIR=$2
 
-cd $BUILD_DIR
+cd ${BUILD_DIR}
+
+# cache may not exist yet
+mkdir -p ${CACHE_DIR}
 
 echo "-----> Bundling Mono v$MONO_VERSION"
 if [ ! -d "${CACHE_DIR}/mono" ]; then
