@@ -60,5 +60,6 @@ fi
 
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
-  mono/bin/xbuild /property:Configuration=Release ${SLN}
+  export PATH="${BUILD_DIR}/mono/bin:${PATH}"
+  xbuild /property:Configuration=Release ${SLN} | indent
 fi
