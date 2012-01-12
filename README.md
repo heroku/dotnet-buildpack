@@ -1,7 +1,7 @@
 Mono Heroku Buildpack
 =====================
 
-This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for Mono that will run ASP.NET applications.
+This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for Mono that will run ASP.NET applications (and other frameworks too).
 
 It serves files using [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_with_XSP).
 
@@ -14,7 +14,7 @@ Example usage:
 
     $ git push heroku master
 
-The buildpack will detect your app as Node.js if it has the file `global.asax` in the root or at one directory depth.
+The buildpack will detect your app as Mono if it has the file `global.asax` in the root or at one directory depth.
 
 Pre-compiling Binaries
 ----------------------
