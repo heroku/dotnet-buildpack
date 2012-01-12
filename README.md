@@ -11,7 +11,6 @@ Usage
 Example usage:
 
     $ heroku create --stack cedar --buildpack http://github.com/brandur/heroku-buildpack-mono.git
-
     $ git push heroku master
 
 The buildpack will detect your app as Mono if it has the file `global.asax` in the root or at one directory depth.
