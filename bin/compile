@@ -41,15 +41,17 @@ mkdir -p ${CACHE_DIR}
 
 echo "-----> Bundling Mono v$MONO_VERSION"
 if [ ! -d "${CACHE_DIR}/mono" ]; then
+  echo "Fetching ${MONO_PACKAGE}" | indent
   curl ${MONO_PACKAGE} --silent --max-time 60 -o - | tar xzf - -C ${CACHE_DIR}
 fi
 cp -r "${CACHE_DIR}/mono" .
 
 echo "-----> Bundling XSP v$XSP_VERSION"
 if [ ! -d "${CACHE_DIR}/xsp" ]; then
+  echo "Fetching ${XSP_PACKAGE}" | indent
   curl ${XSP_PACKAGE} --silent --max-time 60 -o - | tar xzf - -C ${CACHE_DIR}
 
-  # copy XSP DLLs into the GAC
+  echo "Copying libraries to the GAC" | indent
   cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
 fi
 cp -r "${CACHE_DIR}/xsp" .
