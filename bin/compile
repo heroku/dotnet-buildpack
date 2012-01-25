@@ -7,19 +7,17 @@ set -e
 # if any command in a pipe fails, kill the script (useful for indent)
 set -o pipefail
 
+indent() {
+  while read line; do
+    echo "       ${line}"
+  done
+}
+
 mktmpdir() {
   dir=$(mktemp -t node-$1-XXXX)
   rm -rf $dir
   mkdir -p $dir
   echo $dir
-}
-
-function indent() {
-  c='s/^/       /'
-  case $(uname) in
-    Darwin) sed -l "$c";;
-    *)      sed -u "$c";;
-  esac
 }
 
 # config
