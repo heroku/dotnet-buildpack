@@ -71,3 +71,5 @@ if [ "${SLN}" != "" ]; then
 
   xbuild /property:Configuration=Release ${SLN} | indent
 fi
+
+echo "-----> Build success"
