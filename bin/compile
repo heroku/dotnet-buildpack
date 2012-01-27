@@ -13,13 +13,6 @@ indent() {
   done
 }
 
-mktmpdir() {
-  dir=$(mktemp -t node-$1-XXXX)
-  rm -rf $dir
-  mkdir -p $dir
-  echo $dir
-}
-
 # config
 MONO_VERSION="2.10.8"
 XSP_VERSION="2.10.2"
