@@ -30,11 +30,11 @@ CACHE_DIR=$2
 cd ${BUILD_DIR}
 
 # cache may not exist yet
-mkdir -p ${CACHE_DIR}
+mkdir -p $CACHE_DIR
 
 # download and unpack packages
 echo "-----> Fetching Mono binaries"
-curl $MONO_PACKAGE -s -o - | tar xzf - -C $CACHE_DIR/mono
+mkdir -p $CACHE_DIR/mono && curl $MONO_PACKAGE -s -o - | tar xzf - -C $CACHE_DIR/mono
 
 # vendor node into the slug
 PATH="$BUILD_DIR/bin:$PATH"
