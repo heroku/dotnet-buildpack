@@ -29,30 +29,27 @@ CACHE_DIR=$2
 # NOTE: the rest of this script assumes that we're in the build directory
 cd ${BUILD_DIR}
 
-# vendor directories
-VENDORED_MONO="$(mktmpdir mono)"
+# cache may not exist yet
+mkdir -p ${CACHE_DIR}
 
 # download and unpack packages
 echo "-----> Fetching Mono binaries"
-mkdir -p $VENDORED_MONO && curl $MONO_PACKAGE -s -o - | tar xzf - -C $VENDORED_MONO
+curl $MONO_PACKAGE -s -o - | tar xzf - -C $CACHE_DIR/mono
 
 # vendor node into the slug
 PATH="$BUILD_DIR/bin:$PATH"
 echo "-----> Vendoring mono $MONO_VERSION"
-mkdir -p "$BUILD_DIR/mono-build"
-mkdir -p "$BUILD_DIR/mono-build/bin/"
-cp -r "$VENDORED_MONO/bin/" "$BUILD_DIR/mono-build/"
-mkdir -p "$BUILD_DIR/mono-build/etc/"
-cp -r "$VENDORED_MONO/etc/" "$BUILD_DIR/mono-build/"
-mkdir -p "$BUILD_DIR/mono-build/include/"
-cp -r "$VENDORED_MONO/include/" "$BUILD_DIR/mono-build/"
-mkdir -p "$BUILD_DIR/mono-build/lib/"
-cp -r "$VENDORED_MONO/lib/" "$BUILD_DIR/mono-build/"
-mkdir -p "$BUILD_DIR/mono-build/share/"
-cp -r "$VENDORED_MONO/share/" "$BUILD_DIR/mono-build/"
-
-# cache may not exist yet
-mkdir -p ${CACHE_DIR}
+mkdir -p "$BUILD_DIR/mono"
+mkdir -p "$BUILD_DIR/mono/bin/"
+cp -r "$CACHE_DIR/mono/bin/" "$BUILD_DIR/mono/"
+mkdir -p "$BUILD_DIR/mono/etc/"
+cp -r "$CACHE_DIR/mono/etc/" "$BUILD_DIR/mono/"
+mkdir -p "$BUILD_DIR/mono/include/"
+cp -r "$CACHE_DIR/mono/include/" "$BUILD_DIR/mono/"
+mkdir -p "$BUILD_DIR/mono/lib/"
+cp -r "$CACHE_DIR/mono/lib/" "$BUILD_DIR/mono/"
+mkdir -p "$BUILD_DIR/mono/share/"
+cp -r "$CACHE_DIR/mono/share/" "$BUILD_DIR/mono/"
 
 echo "-----> Bundling XSP v${XSP_VERSION}"
 if [ ! -d "${CACHE_DIR}/xsp" ]; then
@@ -60,7 +57,7 @@ if [ ! -d "${CACHE_DIR}/xsp" ]; then
   curl ${XSP_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
 
   echo "Copying libraries to the GAC" | indent
-  cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono-build/lib/mono/gac/
+  cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
 fi
 cp -r "${CACHE_DIR}/xsp" .
 
@@ -76,7 +73,7 @@ if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
 
   # need Mono in its expected location for xbuild to work
-  ln -s "${CACHE_DIR}/mono-build" /app
+  ln -s "${CACHE_DIR}/mono" /app
   export PATH="/app/mono/bin:${PATH}"
 
   xbuild /property:Configuration=Release ${SLN} | indent
