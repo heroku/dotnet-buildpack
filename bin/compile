@@ -14,7 +14,7 @@ indent() {
 }
 
 # config
-MONO_VERSION="2.10.8"
+MONO_VERSION="2.10.9"
 XSP_VERSION="2.10.2"
 
 # s3 packages
