@@ -33,11 +33,11 @@ cd ${BUILD_DIR}
 mkdir -p ${CACHE_DIR}
 
 echo "-----> Bundling Mono v${MONO_VERSION}"
-if [ ! -d "${CACHE_DIR}/mono" ]; then
+if [ ! -d "${CACHE_DIR}/mono-build" ]; then
   echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
   curl ${MONO_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
 fi
-cp -r "${CACHE_DIR}/mono" .
+cp -r "${CACHE_DIR}/mono-build" .
 
 echo "-----> Bundling XSP v${XSP_VERSION}"
 if [ ! -d "${CACHE_DIR}/xsp" ]; then
@@ -45,7 +45,7 @@ if [ ! -d "${CACHE_DIR}/xsp" ]; then
   curl ${XSP_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
 
   echo "Copying libraries to the GAC" | indent
-  cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
+  cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono-build/lib/mono/gac/
 fi
 cp -r "${CACHE_DIR}/xsp" .
 
@@ -61,7 +61,7 @@ if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
 
   # need Mono in its expected location for xbuild to work
-  ln -s "${CACHE_DIR}/mono" /app
+  ln -s "${CACHE_DIR}/mono-build" /app
   export PATH="/app/mono/bin:${PATH}"
 
   xbuild /property:Configuration=Release ${SLN} | indent
