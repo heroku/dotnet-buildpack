@@ -29,15 +29,30 @@ CACHE_DIR=$2
 # NOTE: the rest of this script assumes that we're in the build directory
 cd ${BUILD_DIR}
 
+# vendor directories
+VENDORED_MONO="$(mktmpdir mono)"
+
+# download and unpack packages
+echo "-----> Fetching Mono binaries"
+mkdir -p $VENDORED_MONO && curl $MONO_PACKAGE -s -o - | tar xzf - -C $VENDORED_MONO
+
+# vendor node into the slug
+PATH="$BUILD_DIR/bin:$PATH"
+echo "-----> Vendoring mono $MONO_VERSION"
+mkdir -p "$BUILD_DIR/mono-build"
+mkdir -p "$BUILD_DIR/mono-build/bin/"
+cp -r "$VENDORED_MONO/bin/" "$BUILD_DIR/mono-build/"
+mkdir -p "$BUILD_DIR/mono-build/etc/"
+cp -r "$VENDORED_MONO/etc/" "$BUILD_DIR/mono-build/"
+mkdir -p "$BUILD_DIR/mono-build/include/"
+cp -r "$VENDORED_MONO/include/" "$BUILD_DIR/mono-build/"
+mkdir -p "$BUILD_DIR/mono-build/lib/"
+cp -r "$VENDORED_MONO/lib/" "$BUILD_DIR/mono-build/"
+mkdir -p "$BUILD_DIR/mono-build/share/"
+cp -r "$VENDORED_MONO/share/" "$BUILD_DIR/mono-build/"
+
 # cache may not exist yet
 mkdir -p ${CACHE_DIR}
-
-echo "-----> Bundling Mono v${MONO_VERSION}"
-if [ ! -d "${CACHE_DIR}/mono-build" ]; then
-  echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
-  curl ${MONO_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
-fi
-cp -r "${CACHE_DIR}/mono-build" .
 
 echo "-----> Bundling XSP v${XSP_VERSION}"
 if [ ! -d "${CACHE_DIR}/xsp" ]; then
