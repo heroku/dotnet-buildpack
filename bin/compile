@@ -57,12 +57,13 @@ fi
 # compile an uploaded application
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
-  echo "BUILD_DIR : ${BUILD_DIR}/mono"
-  echo "CACHE_DIR : ${CACHE_DIR}/mono"
+  echo "PATH : /app/mono/bin:${PATH}"
 
-  ln -s "${BUILD_DIR}/mono" /app
+  ln -s "${CACHE_DIR}/mono" /app
+  echo "Export PATH : /app/mono/bin:${PATH}"
   export PATH="/app/mono/bin:${PATH}"
 
+  echo "xbuild /property:Configuration=Release ${SLN}"
   xbuild /property:Configuration=Release ${SLN} | indent
 fi
 
