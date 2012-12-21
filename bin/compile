@@ -15,7 +15,7 @@ echo " ${line}"
 
 # config
 MONO_VERSION="mono-2.10.9.tar.gz"
-XSP_VERSION="xsp-master.tar.gz
+XSP_VERSION="xsp-master.tar.gz"
 
 # s3 packages
 MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/${MONO_VERSION}"
