@@ -57,8 +57,9 @@ fi
 # compile an uploaded application
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
+  echo "BUILD_DIR : ${BUILD_DIR}/mono"
+  echo "CACHE_DIR : ${CACHE_DIR}/mono"
 
-  # need Mono in its expected location for xbuild to work
   ln -s "${BUILD_DIR}/mono" /app
   export PATH="/app/mono/bin:${PATH}"
 
