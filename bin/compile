@@ -9,7 +9,7 @@ set -o pipefail
 
 indent() {
   while read line; do
-echo " ${line}"
+    echo "       ${line}"
   done
 }
 
@@ -33,14 +33,14 @@ mkdir -p ${CACHE_DIR}
 
 echo "-----> Bundling Mono v${MONO_VERSION}"
 if [ ! -d "${CACHE_DIR}/mono" ]; then
-echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
+  echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
   curl ${MONO_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
 fi
 cp -r "${CACHE_DIR}/mono" .
 
 echo "-----> Bundling XSP v${XSP_VERSION}"
 if [ ! -d "${CACHE_DIR}/xsp" ]; then
-echo "Fetching XSP v${XSP_VERSION} @ ${XSP_PACKAGE}" | indent
+  echo "Fetching XSP v${XSP_VERSION} @ ${XSP_PACKAGE}" | indent
   curl ${XSP_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
 
   echo "Copying libraries to the GAC" | indent
@@ -51,13 +51,13 @@ cp -r "${CACHE_DIR}/xsp" .
 # find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
 if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
-echo "-----> Too many *.sln files"
+  echo "-----> Too many *.sln files"
   exit 1
 fi
 
 # compile an uploaded application
 if [ "${SLN}" != "" ]; then
-echo "-----> Compiling Mono application"
+  echo "-----> Compiling Mono application"
 
   # need Mono in its expected location for xbuild to work
   ln -s "${CACHE_DIR}/mono" /app
