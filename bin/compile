@@ -9,16 +9,17 @@ set -o pipefail
 
 indent() {
   while read line; do
-    echo "       ${line}"
+echo " ${line}"
   done
 }
 
 # config
-MONO_VERSION="2.10.9"
+MONO_VERSION="mono-2.10.9.tar.gz"
+XSP_VERSION="xsp-master.tar.gz
 
 # s3 packages
-MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/mono-${MONO_VERSION}.tar.gz"
-XSP_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/xsp-master.tar.gz"
+MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/${MONO_VERSION}"
+XSP_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/${XSP_VERSION}"
 
 # important directories: https://gist.github.com/fe7f04abbd9538b656c5
 BUILD_DIR=$1
@@ -30,16 +31,16 @@ cd ${BUILD_DIR}
 # cache may not exist yet
 mkdir -p ${CACHE_DIR}
 
-echo "-----> Bundling Mono v${MONO_VERSION}"
+echo "-----> Bundling v${MONO_VERSION}"
 if [ ! -d "${CACHE_DIR}/mono" ]; then
-  echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
+echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
   curl ${MONO_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
 fi
 cp -r "${CACHE_DIR}/mono" .
 
-echo "-----> Bundling XSP v${XSP_VERSION}"
+echo "-----> Bundling v${XSP_VERSION}"
 if [ ! -d "${CACHE_DIR}/xsp" ]; then
-  echo "Fetching XSP v${XSP_VERSION} @ ${XSP_PACKAGE}" | indent
+echo "Fetching ${XSP_VERSION} @ ${XSP_PACKAGE}" | indent
   curl ${XSP_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
 
   echo "Copying libraries to the GAC" | indent
@@ -50,20 +51,18 @@ cp -r "${CACHE_DIR}/xsp" .
 # find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
 if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
-  echo "-----> Too many *.sln files"
+echo "-----> Too many *.sln files"
   exit 1
 fi
 
 # compile an uploaded application
 if [ "${SLN}" != "" ]; then
-  echo "-----> Compiling Mono application"
-  echo "PATH : /app/mono/bin:${PATH}"
+echo "-----> Compiling Mono application"
 
+  # need Mono in its expected location for xbuild to work
   ln -s "${CACHE_DIR}/mono" /app
-  echo "Export PATH : /app/mono/bin:${PATH}"
   export PATH="/app/mono/bin:${PATH}"
 
-  echo "xbuild /property:Configuration=Release ${SLN}"
   xbuild /property:Configuration=Release ${SLN} | indent
 fi
 
