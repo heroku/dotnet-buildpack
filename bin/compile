@@ -1,52 +1,50 @@
-#!/usr/bin/env bash
+# /bin/env bash
 # bin/compile <build-dir> <cache-dir>
 
 # fail fast
 set -e
 
-# if any command in a pipe fails, kill the script (useful for indent)
-set -o pipefail
-
-indent() {
-  while read line; do
-echo " ${line}"
-  done
-}
+DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
 
 # config
-MONO_VERSION="mono-2.10.9.tar.gz"
-XSP_VERSION="xsp-master.tar.gz"
+MONO_VERSION="3.0.11"
+XSP_VERSION="3.0.11"
 
 # s3 packages
-MONO_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/${MONO_VERSION}"
-XSP_PACKAGE="https://s3.amazonaws.com/heroku-buildpack-mono/${XSP_VERSION}"
+MONO_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/mono-${MONO_VERSION}.tar.gz"
+XSP_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/xsp-${XSP_VERSION}.tar.gz"
 
-# important directories: https://gist.github.com/fe7f04abbd9538b656c5
 BUILD_DIR=$1
 CACHE_DIR=$2
 
-# NOTE: the rest of this script assumes that we're in the build directory
 cd ${BUILD_DIR}
 
 # cache may not exist yet
 mkdir -p ${CACHE_DIR}
 
-echo "-----> Bundling v${MONO_VERSION}"
-if [ ! -d "${CACHE_DIR}/mono" ]; then
-echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE}" | indent
-  curl ${MONO_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
+echo "-----> Bundling Mono v${MONO_VERSION}"
+MONO_CACHE_LOCATION=${CACHE_DIR}/mono-${MONO_VERSION}
+if [ ! -d "${MONO_CACHE_LOCATION}" ]; then
+  echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE_URL}"
+  mkdir -p ${MONO_CACHE_LOCATION}
+  cd ${MONO_CACHE_LOCATION}
+  curl ${MONO_PACKAGE_URL} -s | tar xz
+  cd ${BUILD_DIR}
 fi
-cp -r "${CACHE_DIR}/mono" .
+cp -r "${MONO_CACHE_LOCATION}/mono" /app/.
 
-echo "-----> Bundling v${XSP_VERSION}"
-if [ ! -d "${CACHE_DIR}/xsp" ]; then
-echo "Fetching ${XSP_VERSION} @ ${XSP_PACKAGE}" | indent
-  curl ${XSP_PACKAGE} --silent --max-time 600 -o - | tar xzf - -C ${CACHE_DIR}
-
-  echo "Copying libraries to the GAC" | indent
-  cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
+echo "-----> Bundling XSP v${XSP_VERSION}"
+XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-${XSP_VERSION}
+if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
+  echo "Fetching ${XSP_VERSION} @ ${XSP_PACKAGE_URL}"
+  mkdir -p ${XSP_CACHE_LOCATION}
+  cd ${XSP_CACHE_LOCATION}
+  curl ${XSP_PACKAGE_URL} -s | tar xz
+  cd ${BUILD_URL}
+  # echo "Copying libraries to the GAC"
+  # cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
 fi
-cp -r "${CACHE_DIR}/xsp" .
+cp -r "${XSP_CACHE_LOCATION}/xsp" /app/.
 
 # find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
@@ -57,13 +55,13 @@ fi
 
 # compile an uploaded application
 if [ "${SLN}" != "" ]; then
-echo "-----> Compiling Mono application"
+  echo "-----> Compiling Mono application"
 
   # need Mono in its expected location for xbuild to work
-  ln -s "${CACHE_DIR}/mono" /app
+  # ln -s "${CACHE_DIR}/mono" /app
   export PATH="/app/mono/bin:${PATH}"
 
-  xbuild /property:Configuration=Release ${SLN} | indent
+  EnableNuGetPackageRestore=true xbuild /property:Configuration=Release ${SLN}
 fi
 
 echo "-----> Build SUCCESS"
