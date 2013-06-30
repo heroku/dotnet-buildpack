@@ -1,26 +1,25 @@
-Mono Heroku Buildpack
-=====================
+# Mono Heroku Buildpack
 
 This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for Mono that will run ASP.NET applications (and other frameworks too).
 
 It serves files using [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_with_XSP).
 
-Usage
------
+## Usage
 
 Example usage:
 
-    $ heroku create --stack cedar --buildpack http://github.com/brandur/heroku-buildpack-mono.git
+    $ heroku create --buildpack http://github.com/friism/heroku-buildpack-mono.git
     $ git push heroku master
 
 The buildpack will detect your app as Mono if it has the file `global.asax` in the root or at one directory depth.
 
-Pre-compiling Binaries
-----------------------
+## TODO
 
-Ignore the lines below. For now, building the binaries is a tedious manual process, but a solution will be along shortly.
+* Store buildoutput in $CACHE_DIR and do incremental builds (also won't cause NuGet packages to be re-downloaded)
+* Remove original source code before slug is tarred up
+* Slim down Mono runtime to reduce slug size and build time
+* Avoid copying Mono runtime to build /app and ${BUILD_DIR} during build
 
-    $ export AWS_ACCOUNT_ID=xxx AWS_SECRET=yyy S3_BUCKET=zzz
-    $ support/package_mono 2.10.8
-    $ support/package_xsp 2.10.2
+## Pre-compiling Binaries
 
+Use Anvil and buildpack-self
