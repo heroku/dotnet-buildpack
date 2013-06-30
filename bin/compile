@@ -71,8 +71,13 @@ if [ "${SLN}" != "" ]; then
   mozroots --import --sync --quiet
   yes | certmgr -ssl https://nuget.org
 
+  BUILD_CACHE_LOCATION=${CACHE_DIR}/build/
+  mkdir -p ${BUILD_CACHE_LOCATION}
+
   # Build
-  EnableNuGetPackageRestore=true xbuild /property:Configuration=Release /property:OutDir=${BUILD_DIR}/ ${SLN}
+  EnableNuGetPackageRestore=true xbuild /property:Configuration=Release /property:OutDir=${BUILD_CACHE_LOCATION} ${SLN}
+
+  cp -r ${BUILD_CACHE_LOCATION}* ${BUILD_DIR}
 fi
 
 echo "-----> Build SUCCESS"
