@@ -1,4 +1,4 @@
-# /bin/env bash
+#!/usr/bin/env bash
 # bin/compile <build-dir> <cache-dir>
 
 # fail fast
@@ -31,7 +31,6 @@ if [ ! -d "${MONO_CACHE_LOCATION}" ]; then
   curl ${MONO_PACKAGE_URL} -s | tar xz
   cd ${BUILD_DIR}
 fi
-cp -r "${MONO_CACHE_LOCATION}/mono" /app/.
 
 echo "-----> Bundling XSP v${XSP_VERSION}"
 XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-${XSP_VERSION}
@@ -40,11 +39,17 @@ if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
   mkdir -p ${XSP_CACHE_LOCATION}
   cd ${XSP_CACHE_LOCATION}
   curl ${XSP_PACKAGE_URL} -s | tar xz
-  cd ${BUILD_URL}
-  # echo "Copying libraries to the GAC"
-  # cp -r ${CACHE_DIR}/xsp/lib/mono/gac/* ${CACHE_DIR}/mono/lib/mono/gac/
+  cd ${BUILD_DIR}
+
+  echo "Copying libraries to the GAC"
+  cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ${MONO_CACHE_LOCATION}/mono/lib/mono/gac/
 fi
-cp -r "${XSP_CACHE_LOCATION}/xsp" /app/.
+
+cp -r "${MONO_CACHE_LOCATION}/mono" .
+# TODO: this is done because `ln -s` causes nuget to fail in subtle ways. Fix
+cp -r "${MONO_CACHE_LOCATION}/mono" /app/.
+
+cp -r "${XSP_CACHE_LOCATION}/xsp" .
 
 # find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
@@ -57,11 +62,17 @@ fi
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
 
-  # need Mono in its expected location for xbuild to work
-  # ln -s "${CACHE_DIR}/mono" /app
-  export PATH="/app/mono/bin:${PATH}"
+#  ln -s "$BUILD_DIR/mono" /app
 
-  EnableNuGetPackageRestore=true xbuild /property:Configuration=Release ${SLN}
+  export PATH="/app/mono/bin:${PATH}"
+  export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
+
+  # Import certs to make NuGet work
+  mozroots --import --sync --quiet
+  yes | certmgr -ssl https://nuget.org
+
+  # Build
+  EnableNuGetPackageRestore=true xbuild /property:Configuration=Release /property:OutDir=${BUILD_DIR}/ ${SLN}
 fi
 
 echo "-----> Build SUCCESS"
