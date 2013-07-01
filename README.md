@@ -6,6 +6,8 @@ It serves files using [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_
 
 ## Usage
 
+Please see [this blog post](http://friism.com/running-net-on-heroku) for additional details.
+
 Example usage:
 
     $ heroku create --buildpack http://github.com/friism/heroku-buildpack-mono.git
