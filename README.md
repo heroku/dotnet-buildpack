@@ -24,6 +24,7 @@ The buildpack will detect your app as Mono if it has the file `global.asax` in t
 * Get bundling and minification to work (likely to be Win/Linux path issues)
 * Figure out whether there's hope for EntityFramework (and reliance on `System.Data.Entity` and other)
 * Get default Visual Studio templates working
+* More Mono/XSP versions and ability to select version
 
 ## Pre-compiling Binaries
 
