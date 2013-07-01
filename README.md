@@ -16,6 +16,7 @@ The buildpack will detect your app as Mono if it has the file `global.asax` in t
 ## TODO
 
 * ~~Store buildoutput in $CACHE_DIR and do incremental builds (also won't cause NuGet packages to be re-downloaded)~~
+* Consider inserting environment variables and connectionstrings into Web.config
 * Remove original source code before slug is tarred up
 * Slim down Mono runtime to reduce slug size and build time
 * Avoid copying Mono runtime to build /app and ${BUILD_DIR} during build
