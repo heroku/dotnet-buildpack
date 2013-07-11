@@ -4,13 +4,17 @@
 # important directories: https://gist.github.com/fe7f04abbd9538b656c5
 BUILD_DIR=$1
 
-# use first dir in _PublishedWebsites
-WEB_ROOT=/app/_PublishedWebsites/`ls $BUILD_DIR/_PublishedWebsites/ | head -1`
-
 cat <<EOF
 ---
 config_vars:
   PATH: /app/mono/bin:/app/xsp/bin:/usr/local/bin:/usr/bin:/bin
+EOF
+
+if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
+    # use first dir in _PublishedWebsites
+    WEB_ROOT=/app/_PublishedWebsites/`ls $BUILD_DIR/_PublishedWebsites/ | head -1`
+    cat <<EOF
 default_process_types:
   web: /app/xsp/bin/xsp4 --nonstop --port \$PORT --root "$WEB_ROOT"
 EOF
+fi
