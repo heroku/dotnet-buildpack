@@ -13,6 +13,7 @@ XSP_VERSION="3.0.11"
 # s3 packages
 MONO_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/mono-${MONO_VERSION}.tar.gz"
 XSP_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/xsp-${XSP_VERSION}.tar.gz"
+NUGET_TARGETS_FILE_URL="${DEPENDENCY_S3_BUCKET_PATH}/vendor/NuGet/NuGet.targets"
 
 BUILD_DIR=$1
 CACHE_DIR=$2
@@ -45,6 +46,13 @@ if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
   cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ${MONO_CACHE_LOCATION}/mono/lib/mono/gac/
 fi
 
+if [ ! -d "${CACHE_DIR}/NuGet.targets" ]; then
+  echo "-----> Fetching fixed NuGet.targets"
+  cd ${CACHE_DIR}
+  curl ${NUGET_TARGETS_FILE_URL} -s -o NuGet.targets
+  cd ${BUILD_DIR}
+fi
+
 cp -r "${MONO_CACHE_LOCATION}/mono" .
 # TODO: this is done because `ln -s` causes nuget to fail in subtle ways. Fix please
 # ln -s "$BUILD_DIR/mono" /app
@@ -69,6 +77,9 @@ if [ "${SLN}" != "" ]; then
   # Import certs to make NuGet work
   mozroots --import --sync --quiet
   yes | certmgr -ssl https://nuget.org
+
+  # Find all NuGet target files and overwrite with know good version
+  find `pwd` -name "NuGet.targets" -exec cp -f ${CACHE_DIR}/NuGet.targets {} \;
 
   # Add symbolic link to deal with NuGet casing breakage
   find `pwd` -name "NuGet.targets" -exec dirname {} \; | xargs -I {} ln -s {}/NuGet.targets {}/nuget.targets
