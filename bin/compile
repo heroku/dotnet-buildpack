@@ -47,6 +47,7 @@ fi
 
 cp -r "${MONO_CACHE_LOCATION}/mono" .
 # TODO: this is done because `ln -s` causes nuget to fail in subtle ways. Fix
+# ln -s "$BUILD_DIR/mono" /app
 cp -r "${MONO_CACHE_LOCATION}/mono" /app/.
 
 cp -r "${XSP_CACHE_LOCATION}/xsp" .
@@ -61,8 +62,6 @@ fi
 # compile an uploaded application
 if [ "${SLN}" != "" ]; then
   echo "-----> Compiling Mono application"
-
-#  ln -s "$BUILD_DIR/mono" /app
 
   export PATH="/app/mono/bin:${PATH}"
   export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
