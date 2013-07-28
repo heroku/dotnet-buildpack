@@ -23,9 +23,9 @@ The buildpack will detect your app as Mono if it has the file `global.asax` in t
 * Slim down Mono runtime to reduce slug size and build time
 * Avoid copying Mono runtime to build /app and ${BUILD_DIR} during build
 * Web.Release.config
-* Get bundling and minification to work (likely to be Win/Linux path issues)
+* ~~Get bundling and minification to work (likely to be Win/Linux path issues)~~
 * Figure out whether there's hope for EntityFramework (and reliance on `System.Data.Entity` and other)
-* Get default Visual Studio templates working
+* ~~Get default Visual Studio templates working (you just have to fix casing problems~~
 * More Mono/XSP versions and ability to select version
 * Visual Basic!
 
