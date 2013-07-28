@@ -6,7 +6,10 @@ It serves files using [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_
 
 ## Usage
 
-Please see [this blog post](http://friism.com/running-net-on-heroku) for additional details.
+Additional details and guides:
+
+ * [Running ASP.NET and .NET console apps on Heroku](http://friism.com/running-net-on-heroku)
+ * [Running Katana/OWIN apps on Heroku](http://friism.com/running-owin-katana-apps-on-heroku)
 
 Example usage:
 
