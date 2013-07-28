@@ -2,7 +2,7 @@
 
 This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for Mono that will run [ASP.NET](http://friism.com/running-net-on-heroku) and [Katana/OWIN applications](http://friism.com/running-owin-katana-apps-on-heroku).
 
-It serves files using [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_with_XSP).
+It uses [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_with_XSP) as the web server.
 
 ## Usage
 
