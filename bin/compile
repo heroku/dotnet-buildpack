@@ -23,6 +23,16 @@ cd ${BUILD_DIR}
 # cache may not exist yet
 mkdir -p ${CACHE_DIR}
 
+echo "-----> Bundling XSP v${XSP_VERSION}"
+XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-{XSP_VERSION}
+if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
+  echo "Fetching ${XSP_VERSION} @ ${XSP_PACKAGE_URL}"
+  mkdir -p ${XSP_CACHE_LOCATION}
+  cd ${XSP_CACHE_LOCATION}
+  curl ${XSP_PACKAGE_URL} -s | tar xz
+  cd ${BUILD_DIR}
+fi
+
 echo "-----> Bundling Mono v${MONO_VERSION}"
 MONO_CACHE_LOCATION=${CACHE_DIR}/mono-${MONO_VERSION}
 if [ ! -d "${MONO_CACHE_LOCATION}" ]; then
@@ -31,18 +41,8 @@ if [ ! -d "${MONO_CACHE_LOCATION}" ]; then
   cd ${MONO_CACHE_LOCATION}
   curl ${MONO_PACKAGE_URL} -s | tar xz
   cd ${BUILD_DIR}
-fi
 
-echo "-----> Bundling XSP v${XSP_VERSION}"
-XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-${XSP_VERSION}
-if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
-  echo "Fetching ${XSP_VERSION} @ ${XSP_PACKAGE_URL}"
-  mkdir -p ${XSP_CACHE_LOCATION}
-  cd ${XSP_CACHE_LOCATION}
-  curl ${XSP_PACKAGE_URL} -s | tar xz
-  cd ${BUILD_DIR}
-
-  echo "Copying libraries to the GAC"
+  echo "Copying xsp libraries to the GAC"
   cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ${MONO_CACHE_LOCATION}/mono/lib/mono/gac/
 fi
 
