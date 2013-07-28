@@ -2,7 +2,7 @@
 
 This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for Mono that will run [ASP.NET](http://friism.com/running-net-on-heroku) and [Katana/OWIN applications](http://friism.com/running-owin-katana-apps-on-heroku).
 
-It uses [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_with_XSP) as the web server.
+It uses [XSP](http://www.mono-project.com/ASP.NET#ASP.NET_hosting_with_XSP) as the web server and runs on Mono 3.2.
 
 ## Usage
 
@@ -10,6 +10,7 @@ Additional details and guides:
 
  * [Running ASP.NET and .NET console apps on Heroku](http://friism.com/running-net-on-heroku)
  * [Running Katana/OWIN apps on Heroku](http://friism.com/running-owin-katana-apps-on-heroku)
+ * [Buildpack update to Mono 3.2 and more](http://friism.com/heroku-net-buildpack-update-to-mono-3-2-and-more)
 
 Example usage:
 
@@ -29,9 +30,9 @@ The buildpack will detect your app as Mono if it has the file `global.asax` in t
 * ~~Get bundling and minification to work (likely to be Win/Linux path issues)~~
 * Figure out whether there's hope for EntityFramework (and reliance on `System.Data.Entity` and other)
 * ~~Get default Visual Studio templates working (you just have to fix casing problems~~
-* More Mono/XSP versions and ability to select version
+* More Mono/XSP versions and ability to select version, like [Python buildpack](https://devcenter.heroku.com/articles/python-runtimes)
 * Visual Basic!
 
 ## Pre-compiling Binaries
 
-Use Anvil and buildpack-self
+Use Anvil and [buildpack-inline](https://github.com/kr/heroku-buildpack-inline)
