@@ -7,7 +7,7 @@ set -e
 DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
 
 # config
-MONO_VERSION="3.0.11"
+MONO_VERSION="3.2.0"
 XSP_VERSION="3.0.11"
 
 # s3 packages
@@ -45,6 +45,7 @@ if [ ! -d "${MONO_CACHE_LOCATION}" ]; then
   echo "Copying xsp libraries to the GAC"
   cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ${MONO_CACHE_LOCATION}/mono/lib/mono/gac/
 fi
+
 
 if [ ! -d "${CACHE_DIR}/NuGet.targets" ]; then
   echo "-----> Fetching fixed NuGet.targets"
