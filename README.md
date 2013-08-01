@@ -31,6 +31,7 @@ The buildpack will detect your app as Mono if it has the file `global.asax` in t
 * Figure out whether there's hope for EntityFramework (and reliance on `System.Data.Entity` and other)
 * ~~Get default Visual Studio templates working (you just have to fix casing problems~~
 * More Mono/XSP versions and ability to select version, like [Python buildpack](https://devcenter.heroku.com/articles/python-runtimes)
+* Get Katana hosting working with System.Web Host
 * Visual Basic!
 
 ## Pre-compiling Binaries
