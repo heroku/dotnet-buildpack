@@ -77,9 +77,9 @@ if [ "${SLN}" != "" ]; then
   export PATH="/app/mono/bin:${PATH}"
   export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 
-  # Import certs to make NuGet work
-  mozroots --import --sync --quiet
-  yes | certmgr -ssl https://nuget.org
+  # Add certs to trust store
+  cp -r ${LP_DIR}/.config ~/.
+  cp -r ${LP_DIR}/.config ${BUILD_DIR}/.
 
   # Find all NuGet target files and overwrite with know good version
   find `pwd` -name "NuGet.targets" -exec cp -f ${CACHE_DIR}/NuGet.targets {} \;
