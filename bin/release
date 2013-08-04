@@ -9,9 +9,8 @@ cat <<EOF
 EOF
 
 if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
-    # use first dir in _PublishedWebsites
     cat <<EOF
 default_process_types:
-  web: /app/xsp/bin/xsp4 --nonstop --port \$PORT --root "/app/_PublishedWebsites/`ls $BUILD_DIR/_PublishedWebsites/ | head -1`"
+  web: /app/nginx/start
 EOF
 fi

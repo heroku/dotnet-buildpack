@@ -9,6 +9,7 @@ DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
 # config
 MONO_VERSION="3.2.0"
 XSP_VERSION="3.0.11"
+NGINX_VERSION="1.5.2"
 
 # s3 packages
 MONO_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/mono-${MONO_VERSION}.tar.gz"
@@ -66,37 +67,57 @@ cp -r "${XSP_CACHE_LOCATION}/xsp" .
 # find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
 if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
-echo "-----> Too many *.sln files"
+  echo "-----> Too many *.sln files"
+  exit 1
+fi
+
+if [ "${SLN}" == "" ]; then
+  echo "-----> No *.sln file found"
   exit 1
 fi
 
 # compile an uploaded application
-if [ "${SLN}" != "" ]; then
-  echo "-----> Compiling Mono application"
+echo "-----> Compiling Mono application"
 
-  export PATH="/app/mono/bin:${PATH}"
-  export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
+export PATH="/app/mono/bin:${PATH}"
+export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 
-  # Add certs to trust store
-  cp -r ${LP_DIR}/.config ~/.
-  cp -r ${LP_DIR}/.config ${BUILD_DIR}/.
+# Add certs to trust store
+cp -r ${LP_DIR}/.config ~/.
+cp -r ${LP_DIR}/.config ${BUILD_DIR}/.
 
-  # Find all NuGet target files and overwrite with know good version
-  find `pwd` -name "NuGet.targets" -exec cp -f ${CACHE_DIR}/NuGet.targets {} \;
+# Find all NuGet target files and overwrite with know good version
+find `pwd` -name "NuGet.targets" -exec cp -f ${CACHE_DIR}/NuGet.targets {} \;
 
-  # Add symbolic link to deal with NuGet casing breakage
-  find `pwd` -name "NuGet.targets" -exec dirname {} \; | xargs -I {} ln -s {}/NuGet.targets {}/nuget.targets
+# Add symbolic link to deal with NuGet casing breakage
+find `pwd` -name "NuGet.targets" -exec dirname {} \; | xargs -I {} ln -s {}/NuGet.targets {}/nuget.targets
 
-  BUILD_CACHE_LOCATION=${CACHE_DIR}/build/
-  mkdir -p ${BUILD_CACHE_LOCATION}
+BUILD_CACHE_LOCATION=${CACHE_DIR}/build/
+mkdir -p ${BUILD_CACHE_LOCATION}
 
-  # Build
-  EnableNuGetPackageRestore=true xbuild /property:Configuration=Release /property:OutDir=${BUILD_CACHE_LOCATION} ${SLN}
+# Build
+EnableNuGetPackageRestore=true xbuild /property:Configuration=Release /property:OutDir=${BUILD_CACHE_LOCATION} ${SLN}
 
-  cp -r ${BUILD_CACHE_LOCATION}* ${BUILD_DIR}
+cp -r ${BUILD_CACHE_LOCATION}* ${BUILD_DIR}
 
-  mkdir -p ${BUILD_DIR}/.profile.d
-  cp -n ${LP_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
+mkdir -p ${BUILD_DIR}/.profile.d
+cp -n ${LP_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
+
+if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
+  echo "Website detected"
+  NGINX_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/nginx-${NGINX_VERSION}.tar.gz"
+  NGINX_CACHE_LOCATION=${CACHE_DIR}/nginx-{NGINX_VERSION}
+  if [ ! -d "${NGINX_CACHE_LOCATION}" ]; then
+    echo "Fetching ${NGINX_VERSION} @ ${NGINX_PACKAGE_URL}"
+    mkdir -p ${NGINX_CACHE_LOCATION}
+    cd ${NGINX_CACHE_LOCATION}
+    curl ${NGINX_PACKAGE_URL} -s | tar xz
+    cd ${BUILD_DIR}
+  fi
+
+  mkdir -p ${BUILD_DIR}/nginx
+  cp ${NGINX_CACHE_LOCATION}/nginx ${BUILD_DIR}/nginx/.
+  cp ${LP_DIR}/nginx/* ${BUILD_DIR}/nginx/.
 fi
 
 echo "-----> Build SUCCESS"

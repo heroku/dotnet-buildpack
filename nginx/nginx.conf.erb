@@ -1,0 +1,28 @@
+worker_processes 4;
+daemon off;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    sendfile    on;
+    tcp_nopush  on;
+
+    keepalive_timeout  65;
+
+    error_log  /app/nginx/logs/error.log notice;
+    access_log /app/nginx/logs/access.log;
+
+    include mime.types;
+
+    server {
+        listen <%= ENV['PORT'] %>;
+
+        location / {
+            fastcgi_pass unix:/tmp/nginx.socket;
+            include fastcgi_params;
+        }
+    }
+}
+
