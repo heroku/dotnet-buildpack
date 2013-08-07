@@ -17,11 +17,13 @@ Example usage:
     $ heroku create --buildpack http://github.com/friism/heroku-buildpack-mono.git
     $ git push heroku master
 
-The buildpack will detect your app as Mono if it has the file `global.asax` in the root or at one directory depth.
+The buildpack will detect your app as ASP.NET if it has the file `global.asax` in the root or at one directory depth or as .NET if it has a `.sln` file.
 
 ## TODO
 
 * ~~Store buildoutput in $CACHE_DIR and do incremental builds (also won't cause NuGet packages to be re-downloaded)~~
+* Less simplistic nginx setup, see [nginx buildpack](https://github.com/ryandotsmith/nginx-buildpack)
+* Factor repeated code into functions like [PHP buildpack](https://github.com/CHH/heroku-buildpack-php/blob/master/bin/compile)
 * Consider inserting environment variables and connectionstrings into Web.config
 * Remove original source code before slug is tarred up
 * Slim down Mono runtime to reduce slug size and build time
