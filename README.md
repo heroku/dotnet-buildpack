@@ -11,6 +11,7 @@ Additional details and guides:
  * [Running ASP.NET and .NET console apps on Heroku](http://friism.com/running-net-on-heroku)
  * [Running Katana/OWIN apps on Heroku](http://friism.com/running-owin-katana-apps-on-heroku)
  * [Buildpack update to Mono 3.2 and more](http://friism.com/heroku-net-buildpack-update-to-mono-3-2-and-more)
+ * [Heroku .NET buildpack now with nginx](http://friism.com/heroku-net-buildpack-now-with-nginx)
 
 Example usage:
 
