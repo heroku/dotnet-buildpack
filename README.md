@@ -39,4 +39,4 @@ The buildpack will detect your app as ASP.NET if it has the file `global.asax` i
 
 ## Pre-compiling Binaries
 
-Use Anvil and [buildpack-inline](https://github.com/kr/heroku-buildpack-inline)
+Use Anvil and [buildpack-inline](https://github.com/kr/heroku-buildpack-inline). The script used when building Mono is available here: https://github.com/friism/build-mono
