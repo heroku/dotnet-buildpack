@@ -5,5 +5,5 @@ mkdir -p /app/nginx/logs
 touch /app/nginx/logs/access.log /app/nginx/logs/error.log
 (tail -f -n 0 /app/nginx/logs/*.log &)
 
-/app/xsp/bin/fastcgi-mono-server4 /applications=/:/app/_PublishedWebsites/`ls /app/_PublishedWebsites/ | head -1` /socket=unix:/tmp/nginx.socket &
+MONO_OPTIONS=--server /app/xsp/bin/fastcgi-mono-server4 /applications=/:/app/_PublishedWebsites/`ls /app/_PublishedWebsites/ | head -1` /socket=unix:/tmp/nginx.socket &
 /app/nginx/nginx -p /app/nginx -c /app/nginx/nginx.conf
