@@ -27,7 +27,7 @@ cd ${BUILD_DIR}
 mkdir -p ${CACHE_DIR}
 
 echo "-----> Bundling XSP v${XSP_VERSION}"
-XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-{XSP_VERSION}
+XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-${XSP_VERSION}
 if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
   echo "Fetching ${XSP_VERSION} @ ${XSP_PACKAGE_URL}"
   mkdir -p ${XSP_CACHE_LOCATION}
