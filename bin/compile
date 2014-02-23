@@ -11,11 +11,6 @@ MONO_VERSION="3.2.8"
 XSP_VERSION="8a31bc625727594d42f94173768bee5cf8afd0a4"
 NGINX_VERSION="1.5.2"
 
-# s3 packages
-MONO_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/mono-${MONO_VERSION}.tar.gz"
-XSP_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/xsp-${XSP_VERSION}.tar.gz"
-NUGET_TARGETS_FILE_URL="${DEPENDENCY_S3_BUCKET_PATH}/vendor/NuGet/NuGet.targets"
-
 BUILD_DIR=$1
 CACHE_DIR=$2
 
@@ -26,43 +21,22 @@ cd ${BUILD_DIR}
 # cache may not exist yet
 mkdir -p ${CACHE_DIR}
 
-echo "-----> Bundling XSP v${XSP_VERSION}"
-XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-${XSP_VERSION}
-if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
-  echo "Fetching ${XSP_VERSION} @ ${XSP_PACKAGE_URL}"
-  mkdir -p ${XSP_CACHE_LOCATION}
-  cd ${XSP_CACHE_LOCATION}
-  curl ${XSP_PACKAGE_URL} -s | tar xz
-  cd ${BUILD_DIR}
-fi
-
 echo "-----> Bundling Mono v${MONO_VERSION}"
 MONO_CACHE_LOCATION=${CACHE_DIR}/mono-${MONO_VERSION}
 if [ ! -d "${MONO_CACHE_LOCATION}" ]; then
-  echo "Fetching Mono v${MONO_VERSION} @ ${MONO_PACKAGE_URL}"
-  mkdir -p ${MONO_CACHE_LOCATION}
-  cd ${MONO_CACHE_LOCATION}
-  curl ${MONO_PACKAGE_URL} -s | tar xz
-  cd ${BUILD_DIR}
-
-  echo "Copying xsp libraries to the GAC"
-  cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ${MONO_CACHE_LOCATION}/mono/lib/mono/gac/
+  rm -rf ${MONO_CACHE_LOCATION} && mkdir -p ${MONO_CACHE_LOCATION}
+  curl ${DEPENDENCY_S3_BUCKET_PATH}/mono-${MONO_VERSION}.tar.gz -s | tar xz -C ${MONO_CACHE_LOCATION}
 fi
-
 
 if [ ! -d "${CACHE_DIR}/NuGet.targets" ]; then
   echo "-----> Fetching fixed NuGet.targets"
-  cd ${CACHE_DIR}
-  curl ${NUGET_TARGETS_FILE_URL} -s -o NuGet.targets
-  cd ${BUILD_DIR}
+  curl ${DEPENDENCY_S3_BUCKET_PATH}/vendor/NuGet/NuGet.targets -s -o ${CACHE_DIR}/NuGet.targets
 fi
 
 cp -r "${MONO_CACHE_LOCATION}/mono" .
 # TODO: this is done because `ln -s` causes nuget to fail in subtle ways. Fix please
 # ln -s "$BUILD_DIR/mono" /app
 cp -r "${MONO_CACHE_LOCATION}/mono" /app/.
-
-cp -r "${XSP_CACHE_LOCATION}/xsp" .
 
 # find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
@@ -76,7 +50,6 @@ if [ "${SLN}" == "" ]; then
   exit 1
 fi
 
-# compile an uploaded application
 echo "-----> Compiling Mono application"
 
 export PATH="/app/mono/bin:${PATH}"
@@ -86,7 +59,7 @@ export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 cp -r ${LP_DIR}/.config ~/.
 cp -r ${LP_DIR}/.config ${BUILD_DIR}/.
 
-# Find all NuGet target files and overwrite with know good version
+# Find all NuGet target files and overwrite with known good version
 find `pwd` -name "NuGet.targets" -exec cp -f ${CACHE_DIR}/NuGet.targets {} \;
 
 # Add symbolic link to deal with NuGet casing breakage
@@ -95,7 +68,6 @@ find `pwd` -name "NuGet.targets" -exec dirname {} \; | xargs -I {} ln -s {}/NuGe
 BUILD_CACHE_LOCATION=${CACHE_DIR}/build/
 mkdir -p ${BUILD_CACHE_LOCATION}
 
-# Build
 EnableNuGetPackageRestore=true xbuild /property:Configuration=Release /property:OutDir=${BUILD_CACHE_LOCATION} ${SLN}
 
 cp -r ${BUILD_CACHE_LOCATION}* ${BUILD_DIR}
@@ -104,15 +76,20 @@ mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${LP_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
 
 if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
-  echo "Website detected"
-  NGINX_PACKAGE_URL="${DEPENDENCY_S3_BUCKET_PATH}/nginx-${NGINX_VERSION}.tar.gz"
+  echo "-----> Bundling XSP v${XSP_VERSION}"
+  XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-${XSP_VERSION}
+  if [ ! -d "${XSP_CACHE_LOCATION}" ]; then
+    rm -rf ${XSP_CACHE_LOCATION} && mkdir -p ${XSP_CACHE_LOCATION}
+    curl ${DEPENDENCY_S3_BUCKET_PATH}/xsp-${XSP_VERSION}.tar.gz -s | tar xz -C ${XSP_CACHE_LOCATION}
+  fi
+  cp -r ${XSP_CACHE_LOCATION}/xsp .
+  cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ./mono/lib/mono/gac/
+
+  echo "-----> Bundling nginx v${NGINX_VERSION}"
   NGINX_CACHE_LOCATION=${CACHE_DIR}/nginx-{NGINX_VERSION}
   if [ ! -d "${NGINX_CACHE_LOCATION}" ]; then
-    echo "Fetching ${NGINX_VERSION} @ ${NGINX_PACKAGE_URL}"
-    mkdir -p ${NGINX_CACHE_LOCATION}
-    cd ${NGINX_CACHE_LOCATION}
-    curl ${NGINX_PACKAGE_URL} -s | tar xz
-    cd ${BUILD_DIR}
+    rm -rf ${NGINX_CACHE_LOCATION} && mkdir -p ${NGINX_CACHE_LOCATION}
+    curl ${DEPENDENCY_S3_BUCKET_PATH}/nginx-${NGINX_VERSION}.tar.gz -s | tar xz -C ${NGINX_CACHE_LOCATION}
   fi
 
   mkdir -p ${BUILD_DIR}/nginx
