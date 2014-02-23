@@ -8,7 +8,7 @@ DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
 
 # config
 MONO_VERSION="3.2.8"
-XSP_VERSION="3.0.11"
+XSP_VERSION="8a31bc625727594d42f94173768bee5cf8afd0a4"
 NGINX_VERSION="1.5.2"
 
 # s3 packages
