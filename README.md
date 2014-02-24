@@ -37,6 +37,7 @@ The buildpack will detect your app as ASP.NET if it has the file `global.asax` i
 * Get Katana hosting working with System.Web Host
 * Visual Basic!
 
-## Pre-compiling Binaries
+## Compiling Binaries
 
-Use Anvil and [buildpack-inline](https://github.com/kr/heroku-buildpack-inline). The script used when building Mono is available here: https://github.com/friism/build-mono
+ * [Building Heroku buildpack binaries with Docker](http://friism.com/building-heroku-buildpack-binaries-with-docker)
+ 
