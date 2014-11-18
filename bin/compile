@@ -5,7 +5,7 @@
 set -e
 
 DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
-MONO_VERSION="3.2.8"
+MONO_VERSION="3.10.0"
 XSP_VERSION="8a31bc625727594d42f94173768bee5cf8afd0a4"
 NGINX_VERSION="1.5.2"
 
@@ -29,7 +29,7 @@ cd ${BUILD_DIR}
 mkdir -p ${CACHE_DIR}
 
 MONO_CACHE_LOCATION=${CACHE_DIR}/mono-${MONO_VERSION}
-conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/mono-${MONO_VERSION}.tar.gz ${MONO_CACHE_LOCATION}
+conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/mono-${MONO_VERSION}.tar.gz ${MONO_CACHE_LOCATION}
 
 if [ ! -d "${CACHE_DIR}/NuGet.targets" ]; then
   echo "-----> Fetching fixed NuGet.targets"
