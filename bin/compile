@@ -7,7 +7,6 @@ set -e
 DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
 MONO_VERSION="3.10.0"
 XSP_VERSION="8a31bc625727594d42f94173768bee5cf8afd0a4"
-NGINX_VERSION="1.5.2"
 
 BUILD_DIR=$1
 CACHE_DIR=$2
@@ -28,13 +27,8 @@ LP_DIR=`cd $(dirname $0); cd ..; pwd`
 cd ${BUILD_DIR}
 mkdir -p ${CACHE_DIR}
 
-MONO_CACHE_LOCATION=${CACHE_DIR}/mono-${MONO_VERSION}
+MONO_CACHE_LOCATION=${CACHE_DIR}/$STACK/mono-${MONO_VERSION}
 conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/mono-${MONO_VERSION}.tar.gz ${MONO_CACHE_LOCATION}
-
-if [ ! -d "${CACHE_DIR}/NuGet.targets" ]; then
-  echo "-----> Fetching fixed NuGet.targets"
-  curl ${DEPENDENCY_S3_BUCKET_PATH}/vendor/NuGet/NuGet.targets -s -o ${CACHE_DIR}/NuGet.targets
-fi
 
 cp -r "${MONO_CACHE_LOCATION}/mono" .
 # TODO: this is done because `ln -s` causes nuget to fail in subtle ways. Fix please
@@ -62,16 +56,16 @@ export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 cp -r ${LP_DIR}/.config ~/.
 cp -r ${LP_DIR}/.config ${BUILD_DIR}/.
 
-# Find all NuGet target files and overwrite with known good version
-find `pwd` -name "NuGet.targets" -exec cp -f ${CACHE_DIR}/NuGet.targets {} \;
-
-# Add symbolic link to deal with NuGet casing breakage
-find `pwd` -name "NuGet.targets" -exec dirname {} \; | xargs -I {} ln -s {}/NuGet.targets {}/nuget.targets
+NUGET_EXECUTABLE_PATH=${CACHE_DIR}/nuget.exe
+if [ ! -f ${NUGET_EXECUTABLE_PATH} ]; then
+  curl -LSso ${NUGET_EXECUTABLE_PATH} http://nuget.org/nuget.exe
+fi
 
 BUILD_CACHE_LOCATION=${CACHE_DIR}/build/
 mkdir -p ${BUILD_CACHE_LOCATION}
 
-EnableNuGetPackageRestore=true xbuild /property:Configuration=Release /property:OutDir=${BUILD_CACHE_LOCATION} ${SLN}
+mono ${NUGET_EXECUTABLE_PATH} restore -NonInteractive
+xbuild /property:Configuration=Release /property:OutDir=${BUILD_CACHE_LOCATION} ${SLN}
 
 cp -r ${BUILD_CACHE_LOCATION}* ${BUILD_DIR}
 
@@ -79,16 +73,15 @@ mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${LP_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
 
 if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
-  XSP_CACHE_LOCATION=${CACHE_DIR}/xsp-${XSP_VERSION}
-  conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/xsp-${XSP_VERSION}.tar.gz ${XSP_CACHE_LOCATION}
+  XSP_CACHE_LOCATION=${CACHE_DIR}/${STACK}/xsp-${XSP_VERSION}
+  conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/xsp-${XSP_VERSION}.tar.gz ${XSP_CACHE_LOCATION}
   cp -r ${XSP_CACHE_LOCATION}/xsp .
   cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ./mono/lib/mono/gac/
 
-  NGINX_CACHE_LOCATION=${CACHE_DIR}/nginx-{NGINX_VERSION}
-  conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/nginx-${NGINX_VERSION}.tar.gz ${NGINX_CACHE_LOCATION}
+  NGINX_CACHE_PATH=${CACHE_DIR}/${STACK}
+  conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/nginx ${NGINX_CACHE_PATH}
   mkdir -p ${BUILD_DIR}/nginx
-  cp ${NGINX_CACHE_LOCATION}/nginx ${BUILD_DIR}/nginx/.
-  cp ${LP_DIR}/nginx/* ${BUILD_DIR}/nginx/.
+  cp ${NGINX_CACHE_PATH}/nginx ${BUILD_DIR}/nginx/.
 fi
 
 echo "-----> Build SUCCESS"
