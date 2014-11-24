@@ -8,13 +8,13 @@ mkfifo $psmgr
 erb /app/nginx/nginx.conf.erb > /app/nginx/nginx.conf
 
 #Initialize log directory
-mkdir -p logs/nginx
-touch logs/nginx/access.log logs/nginx/error.log
+mkdir -p /app/nginx/logs
+touch /app/nginx/logs/access.log /app/nginx/logs/error.log
 
 #Start log redirection.
 (
     #Redirect NGINX logs to stdout
-    tail -qF -n 0 logs/nginx/*.log
+    tail -qF -n 0 /app/nginx/logs/*.log
     echo 'logs' >$psmgr
 ) &
 
