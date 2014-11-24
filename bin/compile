@@ -32,8 +32,7 @@ conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/mono-${MONO_VERSION}.
 
 cp -r "${MONO_CACHE_LOCATION}/mono" .
 # TODO: this is done because `ln -s` causes nuget to fail in subtle ways. Fix please
-# ln -s "$BUILD_DIR/mono" /app
-cp -r "${MONO_CACHE_LOCATION}/mono" /app/.
+ln -s "$BUILD_DIR/mono" /app
 
 # find a solution file
 SLN=$(find . -maxdepth 1 -iname "*.sln")
