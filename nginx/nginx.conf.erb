@@ -21,8 +21,9 @@ http {
     gzip_comp_level 4;
     gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript;
 
+    log_format l2met 'measure#nginx.service=$request_time request_id=$http_x_request_id';
     error_log  /app/nginx/logs/error.log crit;
-    access_log /app/nginx/logs/access.log;
+    access_log /app/nginx/logs/access.log l2met;
 
     include mime.types;
 

@@ -1,9 +1,45 @@
 #!/usr/bin/env bash
+# Mostly taken from nginx-buildpack: https://github.com/ryandotsmith/nginx-buildpack
+
+psmgr=/tmp/process-wait
+rm -f $psmgr
+mkfifo $psmgr
+
 erb /app/nginx/nginx.conf.erb > /app/nginx/nginx.conf
 
-mkdir -p /app/nginx/logs
-touch /app/nginx/logs/access.log /app/nginx/logs/error.log
-(tail -f -n 0 /app/nginx/logs/*.log &)
+#Initialize log directory
+mkdir -p logs/nginx
+touch logs/nginx/access.log logs/nginx/error.log
 
-MONO_OPTIONS=--server /app/xsp/bin/fastcgi-mono-server4 /applications=/:/app/_PublishedWebsites/`ls /app/_PublishedWebsites/ | head -1` /socket=unix:/tmp/nginx.socket &
-/app/nginx/nginx -p /app/nginx -c /app/nginx/nginx.conf
+#Start log redirection.
+(
+    #Redirect NGINX logs to stdout
+    tail -qF -n 0 logs/nginx/*.log
+    echo 'logs' >$psmgr
+) &
+
+#Start app server
+(
+    MONO_OPTIONS=--server /app/xsp/bin/fastcgi-mono-server4 \
+        /applications=/:/app/_PublishedWebsites/`ls /app/_PublishedWebsites/ | head -1` \
+        /socket=unix:/tmp/nginx.socket
+    echo 'app' >$psmgr
+) &
+
+#Start nginx
+(
+    #We expect nginx to run in foreground
+    #We also expect a socket to be at /tmp/nginx.socket
+    /app/nginx/nginx -p /app/nginx -c /app/nginx/nginx.conf
+    echo 'nginx' >$psmgr
+) &
+
+#This read will block the process waiting on a msg to be put into the fifo.
+#If any of the processes defined above should exit,
+#a msg will be put into the fifo causing the read operation
+#to un-block. The process putting the msg into the fifo
+#will use it's process name as a msg so that we can print the offending
+#process to stdout.
+read exit_process <$psmgr
+echo "buildpack=nginx at=exit process=$exit_process"
+exit 1
