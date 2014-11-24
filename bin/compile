@@ -79,12 +79,10 @@ if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
   cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ./mono/lib/mono/gac/
 
   NGINX_CACHE_PATH=${CACHE_DIR}/${STACK}/nginx
-  if [ ! -f ${NGINX_CACHE_PATH} ]; then
-    curl -LSso ${NGINX_CACHE_PATH} ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/nginx
-  fi
+  conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/nginx.tar.gz ${NGINX_CACHE_PATH}
 
   mkdir -p ${BUILD_DIR}/nginx
-  cp ${NGINX_CACHE_PATH} ${BUILD_DIR}/nginx/.
+  cp ${NGINX_CACHE_PATH}/nginx ${BUILD_DIR}/nginx/.
   cp ${LP_DIR}/nginx/* ${BUILD_DIR}/nginx/.
 fi
 
