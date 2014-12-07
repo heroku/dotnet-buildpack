@@ -30,8 +30,9 @@ mkdir -p ${CACHE_DIR}
 MONO_CACHE_LOCATION=${CACHE_DIR}/$STACK/mono-${MONO_VERSION}
 conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/mono-${MONO_VERSION}.tar.gz ${MONO_CACHE_LOCATION}
 
+# Copy mono from cache to where we're building the slug
 cp -r "${MONO_CACHE_LOCATION}/mono" .
-# TODO: this is done because `ln -s` causes nuget to fail in subtle ways. Fix please
+# Mono expects to be running out of /app
 ln -s "$BUILD_DIR/mono" /app
 
 # find a solution file
@@ -82,6 +83,7 @@ if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
 
   mkdir -p ${BUILD_DIR}/nginx
   cp ${NGINX_CACHE_PATH}/nginx ${BUILD_DIR}/nginx/.
+  # Copy nginx configuration from buildpack dir
   cp ${LP_DIR}/nginx/* ${BUILD_DIR}/nginx/.
 fi
 
