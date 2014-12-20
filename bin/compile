@@ -6,7 +6,6 @@ set -e
 
 DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
 MONO_VERSION="3.10.0"
-XSP_VERSION="8a31bc625727594d42f94173768bee5cf8afd0a4"
 
 BUILD_DIR=$1
 CACHE_DIR=$2
@@ -35,20 +34,6 @@ cp -r "${MONO_CACHE_LOCATION}/mono" .
 # Mono expects to be running out of /app
 ln -s "$BUILD_DIR/mono" /app
 
-# find a solution file
-SLN=$(find . -maxdepth 1 -iname "*.sln")
-if [ $( echo "${SLN}" | wc -l ) -gt 1 ]; then
-  echo "-----> Too many *.sln files"
-  exit 1
-fi
-
-if [ "${SLN}" == "" ]; then
-  echo "-----> No *.sln file found"
-  exit 1
-fi
-
-echo "-----> Compiling Mono application"
-
 export PATH="/app/mono/bin:${PATH}"
 export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 
@@ -56,35 +41,27 @@ export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 cp -r ${LP_DIR}/.config ~/.
 cp -r ${LP_DIR}/.config ${BUILD_DIR}/.
 
-NUGET_EXECUTABLE_PATH=${CACHE_DIR}/nuget.exe
-if [ ! -f ${NUGET_EXECUTABLE_PATH} ]; then
-  curl -LSso ${NUGET_EXECUTABLE_PATH} http://nuget.org/nuget.exe
-fi
-
 BUILD_CACHE_LOCATION=${CACHE_DIR}/build/
 mkdir -p ${BUILD_CACHE_LOCATION}
 
-mono ${NUGET_EXECUTABLE_PATH} restore -NonInteractive
-xbuild /property:Configuration=Release /property:OutDir=${BUILD_CACHE_LOCATION} ${SLN}
-
 cp -r ${BUILD_CACHE_LOCATION}* ${BUILD_DIR}
+
+echo "-----> Running kpm restore"
+kpm restore
+
+PROJECT_JSON_FILE=$(find . -maxdepth 3 -iname "project.sln")
+echo "-----> Building ${PROJECT_JSON_FILE}"
+kpm pack --out ${BUILD_DIR} --no-source ${PROJECT_JSON_FILE}
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${LP_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
 
-if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
-  XSP_CACHE_LOCATION=${CACHE_DIR}/${STACK}/xsp-${XSP_VERSION}
-  conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/xsp-${XSP_VERSION}.tar.gz ${XSP_CACHE_LOCATION}
-  cp -r ${XSP_CACHE_LOCATION}/xsp .
-  cp -r ${XSP_CACHE_LOCATION}/xsp/lib/mono/gac/* ./mono/lib/mono/gac/
+NGINX_CACHE_PATH=${CACHE_DIR}/${STACK}/nginx
+conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/nginx.tar.gz ${NGINX_CACHE_PATH}
 
-  NGINX_CACHE_PATH=${CACHE_DIR}/${STACK}/nginx
-  conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/nginx.tar.gz ${NGINX_CACHE_PATH}
-
-  mkdir -p ${BUILD_DIR}/nginx
-  cp ${NGINX_CACHE_PATH}/nginx ${BUILD_DIR}/nginx/.
-  # Copy nginx configuration from buildpack dir
-  cp ${LP_DIR}/nginx/* ${BUILD_DIR}/nginx/.
-fi
+mkdir -p ${BUILD_DIR}/nginx
+cp ${NGINX_CACHE_PATH}/nginx ${BUILD_DIR}/nginx/.
+# Copy nginx configuration from buildpack dir
+cp ${LP_DIR}/nginx/* ${BUILD_DIR}/nginx/.
 
 echo "-----> Build SUCCESS"
