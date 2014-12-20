@@ -6,6 +6,7 @@ set -e
 
 DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
 MONO_VERSION="3.10.0"
+LIBUV_VERSION="1.0.0-rc2"
 
 BUILD_DIR=$1
 CACHE_DIR=$2
@@ -62,6 +63,10 @@ kpm pack --out ${BUILD_DIR} --no-source ${PROJECT_JSON_FILE}
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${LP_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
+
+LIBUV_CACHE_PATH=${CACHE_DIR}/${STACK}/libuv
+conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/libuv-${LIBUV_VERSION}.tar.gz ${LIBUV_CACHE_PATH}
+cp -r ${LIBUV_CACHE_PATH}/libuv .
 
 NGINX_CACHE_PATH=${CACHE_DIR}/${STACK}/nginx
 conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/nginx.tar.gz ${NGINX_CACHE_PATH}
