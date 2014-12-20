@@ -32,7 +32,7 @@ conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/mono-${MONO_VERSION}.
 # Copy mono from cache to where we're building the slug
 cp -r "${MONO_CACHE_LOCATION}/mono" .
 # Mono expects to be running out of /app
-ln -s "$BUILD_DIR/mono" /app
+ln -s "${BUILD_DIR}/mono" /app
 
 export PATH="/app/mono/bin:${PATH}"
 export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
