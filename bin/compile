@@ -63,7 +63,7 @@ source $KRE_USER_HOME/kvm/kvm.sh \
 echo "-----> Running kpm restore"
 kpm restore
 
-PROJECT_JSON_FILE=$(find . -maxdepth 3 -iname "project.json")
+PROJECT_JSON_FILE=$(find . -maxdepth 3 -iname "project.json" | head -1)
 echo "-----> Building ${PROJECT_JSON_FILE}"
 kpm pack --out ${BUILD_DIR} --no-source ${PROJECT_JSON_FILE}
 
