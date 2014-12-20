@@ -51,6 +51,12 @@ if ! hash grunt 2>/dev/null; then
     npm install -g grunt-cli
 fi
 
+KPM_CACHE_LOCATION=${CACHE_DIR}/kpm
+mkdir -p ${KPM_CACHE_LOCATION}
+if [ -d ${KPM_CACHE_LOCATION}/.kpm ]; then
+   cp -r ${KPM_CACHE_LOCATION}/.kpm ${HOME}
+fi
+
 export KRE_VERSION="1.0.0-beta1"
 export KRE_USER_HOME="${CACHE_DIR}/kre"
 source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/master/kvm.sh)
@@ -61,6 +67,8 @@ kvm alias default | xargs -i ln -s ${BUILD_DIR}/kre/packages/{} ${BUILD_DIR}/kre
 
 echo "-----> Running kpm restore"
 kpm restore
+
+cp -r ${HOME}/.kpm ${KPM_CACHE_LOCATION}
 
 PROJECT_JSON_FILE=$(find . -maxdepth 3 -iname "project.json" | head -1)
 echo "-----> Building ${PROJECT_JSON_FILE}"
