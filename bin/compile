@@ -63,7 +63,6 @@ source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/master/kvm.sh)
 kvm install $KRE_VERSION -a default
 
 cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
-kvm alias default | xargs -i ln -s ${BUILD_DIR}/kre/packages/{} ${BUILD_DIR}/kre/packages/default
 
 echo "-----> Running kpm restore"
 kpm restore
@@ -73,6 +72,11 @@ cp -r ${HOME}/.kpm ${KPM_CACHE_LOCATION}
 PROJECT_JSON_FILE=$(find . -maxdepth 3 -iname "project.json" | head -1)
 echo "-----> Building ${PROJECT_JSON_FILE}"
 kpm pack --out ${BUILD_DIR} --no-source ${PROJECT_JSON_FILE}
+
+# TODO: This is somehow not great
+KRE=$(kvm alias default)
+rm -rf ${BUILD_DIR}/kre/packages/default
+mv ${BUILD_DIR}/kre/packages/${KRE}  ${BUILD_DIR}/kre/packages/default
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${LP_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
