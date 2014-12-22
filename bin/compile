@@ -72,7 +72,7 @@ PROJECT_JSON_FILE=$(find . -maxdepth 3 -iname "project.json" | head -1)
 echo "-----> Building ${PROJECT_JSON_FILE}"
 kpm pack --out ${BUILD_DIR} --no-source ${PROJECT_JSON_FILE}
 
-# TODO: This is somehow not great
+# TODO: This is not great
 KRE=$(kvm alias default)
 rm -rf ${BUILD_DIR}/kre/packages/default
 mv ${BUILD_DIR}/kre/packages/${KRE}  ${BUILD_DIR}/kre/packages/default
