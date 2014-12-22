@@ -46,7 +46,6 @@ cp -r ${LP_DIR}/.config ${BUILD_DIR}/.
 NODE_CACHE_LOCATION=${CACHE_DIR}/${STACK}/node-${NODE_VERSION}
 conditional_download http://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz ${NODE_CACHE_LOCATION}
 export PATH="${NODE_CACHE_LOCATION}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-# TODO: this seems to not get installed alongside node in the CACHE_DIR, fix so it's not re-installed on every build
 if ! hash grunt 2>/dev/null; then
     npm install -g grunt-cli
 fi
