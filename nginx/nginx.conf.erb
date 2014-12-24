@@ -30,9 +30,10 @@ http {
     server {
         listen <%= ENV['PORT'] %>;
 
-        location / {
-            fastcgi_pass unix:/tmp/nginx.socket;
-            include fastcgi_params;
+        try_files $uri @app_server;
+
+        location @app_server {
+	    proxy_pass http://127.0.0.1:8080;
         }
     }
 }

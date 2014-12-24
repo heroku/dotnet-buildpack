@@ -20,16 +20,17 @@ touch /app/nginx/logs/access.log /app/nginx/logs/error.log
 
 #Start app server
 (
-    MONO_OPTIONS=--server /app/xsp/bin/fastcgi-mono-server4 \
-        /applications=/:/app/_PublishedWebsites/`ls /app/_PublishedWebsites/ | head -1` \
-        /socket=unix:/tmp/nginx.socket
+    COMMAND=${@:$n}
+    # Take the command passed to this bin and start it.
+    # E.g. bin/start KRE_TRACE=1 KRE_APPBASE=approot/packages/MusicStore/1.0.0/root klr Microsoft.Framework.ApplicationHost Kestrel --server.urls http://+:8080
+    echo "Starting, app server command is $COMMAND"
+    $COMMAND
     echo 'app' >$psmgr
 ) &
 
 #Start nginx
 (
-    #We expect nginx to run in foreground
-    #We also expect a socket to be at /tmp/nginx.socket
+    # We expect nginx to run in foreground
     /app/nginx/nginx -p /app/nginx -c /app/nginx/nginx.conf
     echo 'nginx' >$psmgr
 ) &
