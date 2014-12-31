@@ -20,8 +20,6 @@ touch /app/nginx/logs/access.log /app/nginx/logs/error.log
 
 #Start app server
 (
-    # Take the command passed to this bin and start it.
-    # E.g. nginx/start KRE_TRACE=1 KRE_APPBASE=approot/packages/MusicStore/1.0.0/root klr Microsoft.Framework.ApplicationHost Kestrel --server.urls http://+:8080
     APP_ROOT=$(find ~/approot/packages/ -name root | head -1)
     echo "Starting Kestrel in $APP_ROOT"
     cd ${APP_ROOT}
