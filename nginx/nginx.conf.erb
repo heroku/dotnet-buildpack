@@ -30,6 +30,12 @@ http {
     server {
         root /app/wwwroot;
         listen <%= ENV['PORT'] %>;
+        try_files $uri @app_server;
+
+	location @app_server {
+	    proxy_pass http://127.0.0.1:8080;
+	    proxy_read_timeout 60s;
+        }
     }
 }
 
