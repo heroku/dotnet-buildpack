@@ -65,7 +65,15 @@ kvm install $KRE_VERSION -a default
 # Add KRE to the build output
 cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
 
-PROJECT_JSON_FILE=$(find ${SRC_DIR}/. -maxdepth 3 -iname "project.json" | head -1)
+DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
+if [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
+    PROJECT_JSON_FILE=${SRC_DIR}/$(awk -F "=" '/project/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
+    echo "-----> Project file configured in deployment file"
+else
+    PROJECT_JSON_FILES=$(find ${SRC_DIR}/. -maxdepth 3 -iname "project.json")
+    printf 'Found %s project.json files\n' $(echo "$PROJECT_JSON_FILES" | wc -l | tr -d ' ')
+    PROJECT_JSON_FILE=$(echo "$PROJECT_JSON_FILES" | head -1)
+fi
 echo "-----> Building ${PROJECT_JSON_FILE}"
 
 KPM_CACHE_LOCATION=${CACHE_DIR}/kpm
