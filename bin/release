@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # bin/release <build-dir>
 
-# important directories: https://gist.github.com/fe7f04abbd9538b656c5
-BUILD_DIR=$1
-
-cat <<EOF
+ROOTS=$(find ~/approot/packages/ -name root)
+if [ $( echo "${ROOTS}" | wc -l ) -gt 1 ]; then
+    APP_ROOT=$(echo "$ROOTS" | head -1)
+    cat << EOF
 ---
-EOF
-
-if [ -d "$BUILD_DIR/_PublishedWebsites/" ]; then
-    cat <<EOF
 default_process_types:
-  web: /app/nginx/start
+  web: sleep 2d | KRE_APPBASE=$APP_ROOT klr Microsoft.Framework.ApplicationHost Kestrel --server.urls http://+:\$PORT
+EOF
+else
+    cat << EOF
 EOF
 fi

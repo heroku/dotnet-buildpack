@@ -99,14 +99,6 @@ LIBUV_CACHE_PATH=${CACHE_DIR}/${STACK}/libuv
 conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/libuv-${LIBUV_VERSION}.tar.gz ${LIBUV_CACHE_PATH}
 cp -r ${LIBUV_CACHE_PATH}/libuv ${BUILD_DIR}/.
 
-NGINX_CACHE_PATH=${CACHE_DIR}/${STACK}/nginx
-conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/nginx.tar.gz ${NGINX_CACHE_PATH}
-
-mkdir -p ${BUILD_DIR}/nginx
-cp ${NGINX_CACHE_PATH}/nginx ${BUILD_DIR}/nginx/.
-# Copy nginx configuration from buildpack dir
-cp ${BUILDPACK_DIR}/nginx/* ${BUILD_DIR}/nginx/.
-
 if [ -e ${SRC_DIR}/Procfile ]; then
     cp ${SRC_DIR}/Procfile ${BUILD_DIR}
 fi
