@@ -101,4 +101,14 @@ cp -r ${LIBUV_CACHE_PATH}/libuv ${BUILD_DIR}/.
 
 if [ -e ${SRC_DIR}/Procfile ]; then
     cp ${SRC_DIR}/Procfile ${BUILD_DIR}
+else
+    ROOTS=`cd ${BUILD_DIR}; find approot/packages/ -name root`
+    if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
+	APP_ROOT=$(echo "$ROOTS" | head -1)
+	cat <<EOT >> ${BUILD_DIR}/Procfile
+---
+default_process_types:
+  web: sleep 2d | KRE_APPBASE=$APP_ROOT klr Microsoft.Framework.ApplicationHost Kestrel --server.urls http://+:\$PORT
+EOT
+    fi
 fi
