@@ -57,10 +57,10 @@ if ! hash grunt 2>/dev/null; then
 fi
 
 # Install KRE
-export KRE_VERSION="1.0.0-beta1"
+export KRE_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
 export KRE_USER_HOME=${CACHE_DIR}/kre
 source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/master/kvm.sh)
-kvm install $KRE_VERSION -a default
+kvm install latest -a default
 
 # Add KRE to the build output
 cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
