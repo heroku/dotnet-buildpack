@@ -1,6 +1,6 @@
 # ASP.NET 5 Buildpack
 
-This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for building ASP.NET 5 apps using [`project.json` files](https://github.com/aspnet/Home/wiki/Project.json-file) and the [kpm package manager](https://github.com/aspnet/Home/wiki/Package-Manager).
+This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for building [ASP.NET 5](http://www.asp.net/vnext/overview/aspnet-vnext/aspnet-5-overview) apps using [`project.json` files](https://github.com/aspnet/Home/wiki/Project.json-file) and the [kpm package manager](https://github.com/aspnet/Home/wiki/Package-Manager).
 
 [Mono](http://www.mono-project.com/) is bundled for runtime execution.
 
