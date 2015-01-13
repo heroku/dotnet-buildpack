@@ -26,6 +26,10 @@ function conditional_download() {
   fi
 }
 
+if [ $STACK == "cedar" ]; then
+    echo "-----> Stack cedar not supported" && exit 1
+fi
+
 SRC_DIR=`mktemp -d`
 # Move the app source code into temporary src dir
 mv ${BUILD_DIR}/* ${BUILD_DIR}/.[^.]* ${SRC_DIR}/.
