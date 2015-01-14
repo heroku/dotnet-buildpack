@@ -63,7 +63,7 @@ cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
-    PROJECT_JSON_FILE=$PROJECT
+    PROJECT_JSON_FILE=${SRC_DIR}/${PROJECT}
     echo "Project file configured in PROJECT environment variable"
 elif [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
     PROJECT_JSON_FILE=${SRC_DIR}/$(awk -F "=" '/project/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
