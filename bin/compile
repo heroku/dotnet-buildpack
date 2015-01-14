@@ -62,7 +62,7 @@ kvm install latest -a default
 cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
-if [ -z "$PROJECT" ]; then
+if [ -n "$PROJECT" ]; then
     PROJECT_JSON_FILE=$PROJECT
     echo "Project file configured in PROJECT environment variable"
 elif [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
