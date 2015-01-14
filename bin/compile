@@ -83,7 +83,7 @@ kpm restore --packages ${KPM_CACHE_LOCATION}/.kpm/packages ${PROJECT_JSON_FILE}
 ln -s ${KPM_CACHE_LOCATION}/.kpm ~/.kpm
 
 echo "Running kpm pack"
-kpm pack --out ${BUILD_DIR} --no-source ${PROJECT_JSON_FILE}
+kpm pack --out ${BUILD_DIR} --no-source --quiet ${PROJECT_JSON_FILE}
 
 # TODO: This is not great
 # Rename the KRE to `default` so that we know where it's at
