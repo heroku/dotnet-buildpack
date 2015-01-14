@@ -4,31 +4,24 @@
 # fail fast
 set -e
 
-DEPENDENCY_S3_BUCKET_PATH="http://s3.amazonaws.com/mono-dependencies"
-MONO_VERSION="3.10.0"
-LIBUV_VERSION="1.0.0-rc2"
-NODE_VERSION="0.11.14"
-
-BUILD_DIR=$1
-CACHE_DIR=$2
-# This is where the buildpack is stored
-BUILDPACK_DIR=`cd $(dirname $0); cd ..; pwd`
-
-function conditional_download() {
-  DOWNLOAD_URL="$1"
-  DESTINATION="$2"
-
-  if [ ! -d ${DESTINATION} ]; then
-    rm -rf ${DESTINATION}
-    mkdir -p ${DESTINATION}
-    echo "-----> Downloading ${DOWNLOAD_URL}"
-    curl ${DOWNLOAD_URL} -s | tar xz -C ${DESTINATION}
-  fi
-}
-
 if [ $STACK == "cedar" ]; then
     echo "-----> Stack cedar not supported" && exit 1
 fi
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+# This is where the buildpack is stored
+BUILDPACK_DIR=`cd $(dirname $0); cd ..; pwd`
+
+source $BUILDPACK_DIR/bin/util
+
+export_env_dir ${ENV_DIR}
+
+: ${DEPENDENCY_S3_BUCKET_PATH:="http://s3.amazonaws.com/mono-dependencies"}
+: ${MONO_VERSION:="3.10.0"}
+: ${LIBUV_VERSION:="1.0.0-rc2"}
+: ${NODE_VERSION:="0.11.14"}
 
 SRC_DIR=`mktemp -d`
 # Move the app source code into temporary src dir
@@ -61,7 +54,6 @@ if ! hash grunt 2>/dev/null; then
 fi
 
 # Install KRE
-export KRE_FEED="https://www.myget.org/F/aspnetvnext/api/v2"
 export KRE_USER_HOME=${CACHE_DIR}/kre
 source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/master/kvm.sh)
 kvm install latest -a default
@@ -70,9 +62,12 @@ kvm install latest -a default
 cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
-if [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
+if [ -z "$PROJECT" ]; then
+    PROJECT_JSON_FILE=$PROJECT
+    echo "-----> Project file configured in PROJECT environment variable"
+elif [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
     PROJECT_JSON_FILE=${SRC_DIR}/$(awk -F "=" '/project/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
-    echo "-----> Project file configured in deployment file"
+    echo "-----> Project file configured in .deployment file"
 else
     PROJECT_JSON_FILES=$(find ${SRC_DIR}/. -maxdepth 3 -iname "project.json")
     printf 'Found %s project.json files\n' $(echo "$PROJECT_JSON_FILES" | wc -l | tr -d ' ')

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+function conditional_download() {
+  DOWNLOAD_URL="$1"
+  DESTINATION="$2"
+
+  if [ ! -d ${DESTINATION} ]; then
+    rm -rf ${DESTINATION}
+    mkdir -p ${DESTINATION}
+    echo "-----> Downloading ${DOWNLOAD_URL}"
+    curl ${DOWNLOAD_URL} -s | tar xz -C ${DESTINATION}
+  fi
+}
+
+function export_env_dir() {
+  env_dir=$1
+  whitelist_regex=${2:-'(DEPENDENCY_S3_BUCKET_PATH|MONO_VERSION|LIBUV_VERSION|NODE_VERSION|KRE_FEED|PROJECT)$'}
+  blacklist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
+  if [ -d "$env_dir" ]; then
+    for e in $(ls $env_dir); do
+      echo "$e" | grep -E "$whitelist_regex" | grep -qvE "$blacklist_regex" &&
+      export "$e=$(cat $env_dir/$e)"
+      :
+    done
+  fi
+}
