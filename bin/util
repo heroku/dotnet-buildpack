@@ -7,7 +7,7 @@ function conditional_download() {
   if [ ! -d ${DESTINATION} ]; then
     rm -rf ${DESTINATION}
     mkdir -p ${DESTINATION}
-    echo "-----> Downloading ${DOWNLOAD_URL}"
+    echo "Downloading ${DOWNLOAD_URL}"
     curl ${DOWNLOAD_URL} -s | tar xz -C ${DESTINATION}
   fi
 }

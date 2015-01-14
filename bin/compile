@@ -5,7 +5,7 @@
 set -e
 
 if [ $STACK == "cedar" ]; then
-    echo "-----> Stack cedar not supported" && exit 1
+    echo "Stack cedar not supported" && exit 1
 fi
 
 BUILD_DIR=$1
@@ -64,25 +64,25 @@ cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -z "$PROJECT" ]; then
     PROJECT_JSON_FILE=$PROJECT
-    echo "-----> Project file configured in PROJECT environment variable"
+    echo "Project file configured in PROJECT environment variable"
 elif [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
     PROJECT_JSON_FILE=${SRC_DIR}/$(awk -F "=" '/project/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
-    echo "-----> Project file configured in .deployment file"
+    echo "Project file configured in .deployment file"
 else
     PROJECT_JSON_FILES=$(find ${SRC_DIR}/. -maxdepth 3 -iname "project.json")
     printf 'Found %s project.json files\n' $(echo "$PROJECT_JSON_FILES" | wc -l | tr -d ' ')
     PROJECT_JSON_FILE=$(echo "$PROJECT_JSON_FILES" | head -1)
 fi
-echo "-----> Building ${PROJECT_JSON_FILE}"
+echo "Building ${PROJECT_JSON_FILE}"
 
 KPM_CACHE_LOCATION=${CACHE_DIR}/kpm
-echo "-----> Running kpm restore"
+echo "Running kpm restore"
 kpm restore --packages ${KPM_CACHE_LOCATION}/.kpm/packages ${PROJECT_JSON_FILE}
 
 # Link in the packages dir so that `pack` can find packages 
 ln -s ${KPM_CACHE_LOCATION}/.kpm ~/.kpm
 
-echo "-----> Running kpm pack"
+echo "Running kpm pack"
 kpm pack --out ${BUILD_DIR} --no-source ${PROJECT_JSON_FILE}
 
 # TODO: This is not great
