@@ -20,7 +20,7 @@ export_env_dir ${ENV_DIR}
 
 : ${DEPENDENCY_S3_BUCKET_PATH:="http://s3.amazonaws.com/mono-dependencies"}
 : ${MONO_VERSION:="3.10.0"}
-: ${LIBUV_VERSION:="1.0.0-rc2"}
+: ${LIBUV_VERSION:="1.2.0"}
 : ${NODE_VERSION:="0.11.14"}
 
 SRC_DIR=`mktemp -d`
