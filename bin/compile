@@ -77,7 +77,7 @@ echo "Building ${PROJECT_JSON_FILE}"
 
 KPM_CACHE_LOCATION=${CACHE_DIR}/kpm
 echo "Running kpm restore"
-kpm restore --packages ${KPM_CACHE_LOCATION}/.kpm/packages ${PROJECT_JSON_FILE}
+kpm restore --quiet --packages ${KPM_CACHE_LOCATION}/.kpm/packages ${PROJECT_JSON_FILE}
 
 # Link in the packages dir so that `pack` can find packages 
 ln -s ${KPM_CACHE_LOCATION}/.kpm ~/.kpm
