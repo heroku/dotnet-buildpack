@@ -30,8 +30,11 @@ else
 fi
 
 SRC_DIR=`mktemp -d`
-# Move the app source code into temporary src dir
-mv ${BUILD_DIR}/* ${BUILD_DIR}/.[^.]* ${SRC_DIR}/.
+# Move the app source code into temporary src dir using subshell to not leak shopt
+(
+    shopt -s dotglob
+    mv ${BUILD_DIR}/* ${SRC_DIR}
+)
 
 mkdir -p ${CACHE_DIR}
 
