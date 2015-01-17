@@ -46,10 +46,8 @@ ln -s ${BUILD_DIR}/mono /app
 export PATH="/app/mono/bin:${PATH}"
 export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 
-# Add certs to trust store
-cp -r ${BUILDPACK_DIR}/.config ${BUILD_DIR}/.
-# Link the certs to make them available to build Mono
-ln -s ${BUILD_DIR}/.config ~/.config
+mozroots --import --sync --quiet
+cp -r ~/.config ${BUILD_DIR}/.
 
 # Install Node and grunt-cli
 NODE_CACHE_LOCATION=${CACHE_DIR}/${STACK}/node-${NODE_VERSION}
