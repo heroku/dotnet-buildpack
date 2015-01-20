@@ -23,7 +23,7 @@ export_env_dir ${ENV_DIR}
 : ${LIBUV_VERSION:="1.2.0"}
 : ${NODE_VERSION:="0.11.14"}
 
-if [ -n "$DEBUG" ]; then
+if [ -n "$BUILD_DEBUG" ]; then
     K_FLAGS=""
 else
     K_FLAGS="--quiet"
