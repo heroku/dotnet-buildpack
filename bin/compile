@@ -112,7 +112,7 @@ else
 	cat <<EOT >> ${BUILD_DIR}/Procfile
 ---
 default_process_types:
-  web: sleep 2d | KRE_APPBASE=$APP_ROOT klr Microsoft.Framework.ApplicationHost Kestrel --server.urls http://+:\$PORT
+  web: sleep 2d | klr --appbase $APP_ROOT Microsoft.Framework.ApplicationHost Kestrel --server.urls http://+:\$PORT
 EOT
     fi
 fi
