@@ -61,6 +61,7 @@ if ! hash grunt 2>/dev/null; then
 fi
 
 # Install KRE
+# TODO: consider not doing this on every build
 export KRE_USER_HOME=${CACHE_DIR}/kre
 source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/master/kvm.sh)
 kvm install latest -a default
