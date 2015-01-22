@@ -110,10 +110,8 @@ else
     ROOTS=`cd ${BUILD_DIR}; find approot/packages/ -name root`
     if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
-	cat <<EOT >> ${BUILD_DIR}/Procfile
----
-default_process_types:
-  web: sleep 2d | klr Microsoft.Framework.ApplicationHost Kestrel --appbase $APP_ROOT --configuration Release --server.urls http://+:\$PORT
+	cat << EOT >> ${BUILD_DIR}/Procfile
+web: sleep 2d | klr Microsoft.Framework.ApplicationHost Kestrel --appbase $APP_ROOT --configuration Release --server.urls http://+:\$PORT
 EOT
     fi
 fi
