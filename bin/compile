@@ -111,7 +111,7 @@ else
     if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: sleep 2d | klr Microsoft.Framework.ApplicationHost Kestrel --appbase $APP_ROOT --configuration Release --server.urls http://+:\$PORT
+web: klr Microsoft.Framework.ApplicationHost Kestrel --appbase $APP_ROOT --configuration Release --server.urls http://+:\$PORT < /dev/null
 EOT
     fi
 fi
