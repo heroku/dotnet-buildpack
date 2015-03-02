@@ -22,6 +22,7 @@ export_env_dir ${ENV_DIR}
 : ${MONO_VERSION:="3.10.0"}
 : ${LIBUV_VERSION:="1.2.0"}
 : ${NODE_VERSION:="0.11.14"}
+: ${KVM_BRANCH:="master"}
 
 if [ -n "$BUILD_DEBUG" ]; then
     K_FLAGS=""
@@ -63,7 +64,7 @@ fi
 # Install KRE
 # TODO: consider not doing this on every build
 export KRE_USER_HOME=${CACHE_DIR}/kre
-source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/master/kvm.sh)
+source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/${KVM_BRANCH}/kvm.sh)
 kvm install latest -a default
 
 # Add KRE to the build output
