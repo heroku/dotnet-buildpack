@@ -22,6 +22,8 @@ export_env_dir ${ENV_DIR}
 : ${MONO_VERSION:="3.10.0"}
 : ${LIBUV_VERSION:="1.2.0"}
 : ${NODE_VERSION:="0.11.14"}
+: ${KVM_BRANCH:="master"}
+: ${KRE_VERSION:="1.0.0-beta3"}
 
 if [ -n "$BUILD_DEBUG" ]; then
     K_FLAGS=""
@@ -62,12 +64,12 @@ fi
 
 # Install KRE
 # TODO: consider not doing this on every build
-export KRE_USER_HOME=${CACHE_DIR}/kre
-source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/master/kvm.sh)
-kvm install latest -a default
+export KVM_USER_HOME=${CACHE_DIR}/kre
+source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/${KVM_BRANCH}/kvm.sh)
+kvm install $KRE_VERSION -a default
 
 # Add KRE to the build output
-cp -r ${KRE_USER_HOME} ${BUILD_DIR}/.
+cp -r ${KVM_USER_HOME} ${BUILD_DIR}/.
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
@@ -84,18 +86,21 @@ fi
 echo "Building ${PROJECT_JSON_FILE}"
 
 KPM_CACHE_LOCATION=${CACHE_DIR}/kpm
-kpm restore $K_FLAGS --packages ${KPM_CACHE_LOCATION}/.kpm/packages ${PROJECT_JSON_FILE}
+kpm restore $K_FLAGS --packages ${KPM_CACHE_LOCATION}/.k/packages ${PROJECT_JSON_FILE}
 
 # Link in the packages dir so that `pack` can find packages 
-ln -s ${KPM_CACHE_LOCATION}/.kpm ~/.kpm
+ln -s ${KPM_CACHE_LOCATION}/.k ~/.k
 
-kpm pack --out ${BUILD_DIR} --no-source $K_FLAGS --configuration Release ${PROJECT_JSON_FILE}
+kpm bundle --out ${BUILD_DIR} $K_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
+# Clean out core-stuff that we don't need in the slug
+find ${BUILD_DIR} -name aspnetcore50 -print0 | xargs -0 rm -r --
 
 # TODO: This is not great
 # Rename the KRE to `default` so that we know where it's at
+# If we don't do this, there's symlink breakage
 KRE=$(kvm alias default)
-rm -rf ${BUILD_DIR}/kre/packages/default
-mv ${BUILD_DIR}/kre/packages/${KRE} ${BUILD_DIR}/kre/packages/default
+rm -rf ${BUILD_DIR}/kre/runtimes/default
+mv ${BUILD_DIR}/kre/runtimes/${KRE} ${BUILD_DIR}/kre/runtimes/default
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
@@ -111,7 +116,7 @@ else
     if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: sleep 2d | klr Microsoft.Framework.ApplicationHost Kestrel --appbase $APP_ROOT --configuration Release --server.urls http://+:\$PORT
+web: sleep 2d | klr --appbase $APP_ROOT Microsoft.Framework.ApplicationHost kestrel --configuration Release --server.urls http://+:\$PORT
 EOT
     fi
 fi
