@@ -88,7 +88,7 @@ echo "Building ${PROJECT_JSON_FILE}"
 KPM_CACHE_LOCATION=${CACHE_DIR}/kpm
 kpm restore $K_FLAGS --packages ${KPM_CACHE_LOCATION}/.k/packages ${PROJECT_JSON_FILE}
 
-# Link in the packages dir so that `pack` can find packages 
+# Link in the packages dir so that `bundle` can find packages
 ln -s ${KPM_CACHE_LOCATION}/.k ~/.k
 
 kpm bundle --out ${BUILD_DIR} $K_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
