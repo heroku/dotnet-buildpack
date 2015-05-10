@@ -18,12 +18,12 @@ source $BUILDPACK_DIR/bin/util
 
 export_env_dir ${ENV_DIR}
 
-: ${MONO_VERSION:="4.0.1"}
+: ${MONO_VERSION:="4.0.1.44"}
 : ${MONO_DOWNLOAD_LOCATION:="https://github.com/friism/mono-builder/releases/download/v${MONO_VERSION}/mono-${MONO_VERSION}.tar.gz"}
-: ${LIBUV_VERSION:="1.4.2"}
+: ${LIBUV_VERSION:="1.6.0"}
 : ${NODE_VERSION:="0.12.2"}
-: ${DNVM_BRANCH:="master"}
-: ${DNX_VERSION:="1.0.0-beta4"}
+: ${DNVM_BRANCH:="dev"}
+: ${DNX_VERSION:="latest"}
 
 if [ -n "$BUILD_DEBUG" ]; then
     DNU_FLAGS=""
@@ -40,7 +40,8 @@ SRC_DIR=`mktemp -d`
 
 mkdir -p ${CACHE_DIR}
 
-curl ${MONO_DOWNLOAD_LOCATION} -s | tar xz -C ${BUILD_DIR}
+echo "installing ${MONO_DOWNLOAD_LOCATION}"
+curl ${MONO_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}
 # Mono expects to be running out of /app
 ln -s ${BUILD_DIR}/mono /app
 
@@ -52,7 +53,7 @@ cp -r ~/.config ${BUILD_DIR}/.
 
 # Install Node and grunt-cli
 NODE_PATH=`mktemp -d`
-curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -s \
+curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
     | tar xz -C ${NODE_PATH}
 export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
 if ! hash grunt 2>/dev/null; then
@@ -61,11 +62,13 @@ fi
 
 # Install DNX
 # TODO: consider not doing this on every build
-export DNX_USER_HOME=${CACHE_DIR}/dnx
-source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/${DNVM_BRANCH}/dnvminstall.sh)
-dnvm install $DNX_VERSION -a default
+# TODO: extract DNX version from global.json
+touch ~/.profile
+curl -sSL https://raw.githubusercontent.com/aspnet/Home/${DNVM_BRANCH}/dnvminstall.sh \
+    | sh && source ~/.dnx/dnvm/dnvm.sh
+dnvm install $DNX_VERSION -u -a default
 
-# Add KRE to the build output
+# Add DNX to the build output
 cp -r ${DNX_USER_HOME} ${BUILD_DIR}/.
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
@@ -82,21 +85,23 @@ else
 fi
 echo "Building ${PROJECT_JSON_FILE}"
 
-DNU_CACHE_LOCATION=${CACHE_DIR}/dnu
-dnu restore $K_FLAGS --packages ${DNU_CACHE_LOCATION}/.dnx/packages ${PROJECT_JSON_FILE}
+export DNU_LOCAL_CACHE="/app/.local/share/dnu"
+export DNU_CACHE_LOCATION="${CACHE_DIR}/dnu/cache"
+mkdir -p ${DNU_LOCAL_CACHE}
+mkdir -p ${DNU_CACHE_LOCATION}
+ln -s ${DNU_CACHE_LOCATION} ${DNU_LOCAL_CACHE}/cache 
 
-# Link in the packages dir so that `bundle` can find packages
-# TODO: check whether this is is still requried
-ln -s ${DNU_CACHE_LOCATION}/.dnx ~/.dnx
+dnu restore $DNU_FLAGS ${PROJECT_JSON_FILE}
 
 dnu publish --out ${BUILD_DIR} $DNU_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
+
 # Clean out core-stuff that we don't need in the slug
-find ${BUILD_DIR} -name aspnetcore50 -print0 | xargs -0 rm -r --
+find ${BUILD_DIR} -iname dnxcore50 -print0 | xargs -0 rm -r --
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
 
-curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -s \
+curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -sL \
      | tar xz -C ${BUILD_DIR}
 if [ -e ${SRC_DIR}/Procfile ]; then
     cp ${SRC_DIR}/Procfile ${BUILD_DIR}
@@ -105,7 +110,7 @@ else
     if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: dnx --appbase $APP_ROOT Microsoft.Framework.ApplicationHost kestrel --configuration Release --port $PORT
+web: dnx --appbase $APP_ROOT Microsoft.Framework.ApplicationHost kestrel --configuration Release --server.urls http://+:\$PORT
 EOT
     fi
 fi
