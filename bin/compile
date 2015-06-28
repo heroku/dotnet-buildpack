@@ -4,8 +4,8 @@
 # fail fast
 set -e
 
-if [ $STACK == "cedar" ]; then
-    echo "Stack cedar not supported" && exit 1
+if [ $STACK != "cedar-14" ]; then
+    echo "Stack ${STACK} not supported" && exit 1
 fi
 
 BUILD_DIR=$1
@@ -18,17 +18,17 @@ source $BUILDPACK_DIR/bin/util
 
 export_env_dir ${ENV_DIR}
 
-: ${DEPENDENCY_S3_BUCKET_PATH:="http://s3.amazonaws.com/mono-dependencies"}
-: ${MONO_VERSION:="3.10.0"}
-: ${LIBUV_VERSION:="1.2.0"}
-: ${NODE_VERSION:="0.11.14"}
-: ${KVM_BRANCH:="master"}
-: ${KRE_VERSION:="1.0.0-beta3"}
+: ${MONO_VERSION:="4.0.1.44"}
+: ${MONO_DOWNLOAD_LOCATION:="https://github.com/friism/mono-builder/releases/download/v${MONO_VERSION}/mono-${MONO_VERSION}.tar.gz"}
+: ${LIBUV_VERSION:="1.6.0"}
+: ${NODE_VERSION:="0.12.2"}
+: ${DNVM_BRANCH:="dev"}
+: ${DNX_VERSION:="latest"}
 
 if [ -n "$BUILD_DEBUG" ]; then
-    K_FLAGS=""
+    DNU_FLAGS=""
 else
-    K_FLAGS="--quiet"
+    DNU_FLAGS="--quiet"
 fi
 
 SRC_DIR=`mktemp -d`
@@ -40,11 +40,8 @@ SRC_DIR=`mktemp -d`
 
 mkdir -p ${CACHE_DIR}
 
-MONO_CACHE_LOCATION=${CACHE_DIR}/$STACK/mono-${MONO_VERSION}
-conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/mono-${MONO_VERSION}.tar.gz ${MONO_CACHE_LOCATION}
-
-# Copy mono from cache to where we're building the slug
-cp -r ${MONO_CACHE_LOCATION}/mono ${BUILD_DIR}/.
+echo "installing ${MONO_DOWNLOAD_LOCATION}"
+curl ${MONO_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}
 # Mono expects to be running out of /app
 ln -s ${BUILD_DIR}/mono /app
 
@@ -55,21 +52,24 @@ mozroots --import --sync --quiet
 cp -r ~/.config ${BUILD_DIR}/.
 
 # Install Node and grunt-cli
-NODE_CACHE_LOCATION=${CACHE_DIR}/${STACK}/node-${NODE_VERSION}
-conditional_download http://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz ${NODE_CACHE_LOCATION}
-export PATH="${NODE_CACHE_LOCATION}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
+NODE_PATH=`mktemp -d`
+curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
+    | tar xz -C ${NODE_PATH}
+export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
 if ! hash grunt 2>/dev/null; then
     npm install -g grunt-cli
 fi
 
-# Install KRE
+# Install DNX
 # TODO: consider not doing this on every build
-export KVM_USER_HOME=${CACHE_DIR}/kre
-source <(curl -sL https://raw.githubusercontent.com/aspnet/Home/${KVM_BRANCH}/kvm.sh)
-kvm install $KRE_VERSION -a default
+# TODO: extract DNX version from global.json
+touch ~/.profile
+curl -sSL https://raw.githubusercontent.com/aspnet/Home/${DNVM_BRANCH}/dnvminstall.sh \
+    | sh && source ~/.dnx/dnvm/dnvm.sh
+dnvm install $DNX_VERSION -u -a default
 
-# Add KRE to the build output
-cp -r ${KVM_USER_HOME} ${BUILD_DIR}/.
+# Add DNX to the build output
+cp -r ${DNX_USER_HOME} ${BUILD_DIR}/.
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
@@ -85,30 +85,24 @@ else
 fi
 echo "Building ${PROJECT_JSON_FILE}"
 
-KPM_CACHE_LOCATION=${CACHE_DIR}/kpm
-kpm restore $K_FLAGS --packages ${KPM_CACHE_LOCATION}/.k/packages ${PROJECT_JSON_FILE}
+export DNU_LOCAL_CACHE="/app/.local/share/dnu"
+export DNU_CACHE_LOCATION="${CACHE_DIR}/dnu/cache"
+mkdir -p ${DNU_LOCAL_CACHE}
+mkdir -p ${DNU_CACHE_LOCATION}
+ln -s ${DNU_CACHE_LOCATION} ${DNU_LOCAL_CACHE}/cache 
 
-# Link in the packages dir so that `pack` can find packages 
-ln -s ${KPM_CACHE_LOCATION}/.k ~/.k
+dnu restore $DNU_FLAGS ${PROJECT_JSON_FILE}
 
-kpm bundle --out ${BUILD_DIR} $K_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
+dnu publish --out ${BUILD_DIR} $DNU_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
+
 # Clean out core-stuff that we don't need in the slug
-find ${BUILD_DIR} -name aspnetcore50 -print0 | xargs -0 rm -r --
-
-# TODO: This is not great
-# Rename the KRE to `default` so that we know where it's at
-# If we don't do this, there's symlink breakage
-KRE=$(kvm alias default)
-rm -rf ${BUILD_DIR}/kre/runtimes/default
-mv ${BUILD_DIR}/kre/runtimes/${KRE} ${BUILD_DIR}/kre/runtimes/default
+find ${BUILD_DIR} -iname dnxcore50 -print0 | xargs -0 rm -r --
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
 
-LIBUV_CACHE_PATH=${CACHE_DIR}/${STACK}/libuv
-conditional_download ${DEPENDENCY_S3_BUCKET_PATH}/${STACK}/libuv-${LIBUV_VERSION}.tar.gz ${LIBUV_CACHE_PATH}
-cp -r ${LIBUV_CACHE_PATH}/libuv ${BUILD_DIR}/.
-
+curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -sL \
+     | tar xz -C ${BUILD_DIR}
 if [ -e ${SRC_DIR}/Procfile ]; then
     cp ${SRC_DIR}/Procfile ${BUILD_DIR}
 else
@@ -116,7 +110,7 @@ else
     if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: sleep 2d | klr --appbase $APP_ROOT Microsoft.Framework.ApplicationHost kestrel --configuration Release --server.urls http://+:\$PORT
+web: dnx --appbase $APP_ROOT Microsoft.Framework.ApplicationHost kestrel --configuration Release --server.urls http://+:\$PORT
 EOT
     fi
 fi
