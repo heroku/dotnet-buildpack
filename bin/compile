@@ -78,7 +78,9 @@ ln -s ${DNVM_RUNTIME_CACHE_LOCATION} ${DNVM_RUNTIME_LOCAL_CACHE}/runtimes
 dnvm install $DNX_VERSION -u -a default
 
 # Add DNX to the build output
-cp -r ${DNX_USER_HOME} ${BUILD_DIR}/.
+DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
+mkdir -p ${DNX_BUILD_LOCATION}
+cp -r ~/.dnx/runtimes/`dnvm alias default` ${DNX_BUILD_LOCATION}
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
