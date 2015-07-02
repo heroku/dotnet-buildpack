@@ -63,11 +63,18 @@ if [ -n $(find . -type f -iname package.json -o -iname bower.json -i -iname grun
 fi
 
 # Install DNX
-# TODO: consider not doing this on every build
-# TODO: extract DNX version from global.json
+# TODO: consider making this not dependent on GitHub being up
 touch ~/.profile
 curl -sSL https://raw.githubusercontent.com/aspnet/Home/${DNVM_BRANCH}/dnvminstall.sh \
 	| sh && source ~/.dnx/dnvm/dnvm.sh
+
+export DNVM_RUNTIME_LOCAL_CACHE="/app/.dnx"
+export DNVM_RUNTIME_CACHE_LOCATION="${CACHE_DIR}/dnx/runtimes"
+mkdir -p ${DNVM_RUNTIME_LOCAL_CACHE}
+mkdir -p ${DNVM_RUNTIME_CACHE_LOCATION}
+ln -s ${DNVM_RUNTIME_CACHE_LOCATION} ${DNVM_RUNTIME_LOCAL_CACHE}/runtimes
+
+# TODO: extract DNX version from global.json
 dnvm install $DNX_VERSION -u -a default
 
 # Add DNX to the build output
