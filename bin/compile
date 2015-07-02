@@ -5,7 +5,7 @@
 set -e
 
 if [ $STACK != "cedar-14" ]; then
-    echo "Stack ${STACK} not supported" && exit 1
+	echo "Stack ${STACK} not supported" && exit 1
 fi
 
 BUILD_DIR=$1
@@ -26,16 +26,16 @@ export_env_dir ${ENV_DIR}
 : ${DNX_VERSION:="latest"}
 
 if [ -n "$BUILD_DEBUG" ]; then
-    DNU_FLAGS=""
+	DNU_FLAGS=""
 else
-    DNU_FLAGS="--quiet"
+	DNU_FLAGS="--quiet"
 fi
 
 SRC_DIR=`mktemp -d`
 # Move the app source code into temporary src dir using subshell to not leak shopt
 (
-    shopt -s dotglob
-    mv ${BUILD_DIR}/* ${SRC_DIR}
+	shopt -s dotglob
+	mv ${BUILD_DIR}/* ${SRC_DIR}
 )
 
 mkdir -p ${CACHE_DIR}
@@ -52,14 +52,14 @@ mozroots --import --sync --quiet
 cp -r ~/.config ${BUILD_DIR}/.
 
 if [ -n $(find . -type f -iname package.json -o -iname bower.json -i -iname gruntfile.js) ]; then
-    # Install Node and grunt-cli
-    NODE_PATH=`mktemp -d`
-    curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
-        | tar xz -C ${NODE_PATH}
-    export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-    if ! hash grunt 2>/dev/null; then
-        npm install -g grunt-cli
-    fi
+	# Install Node and grunt-cli
+	NODE_PATH=`mktemp -d`
+	curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
+		| tar xz -C ${NODE_PATH}
+	export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
+	if ! hash grunt 2>/dev/null; then
+		npm install -g grunt-cli
+	fi
 fi
 
 # Install DNX
@@ -67,7 +67,7 @@ fi
 # TODO: extract DNX version from global.json
 touch ~/.profile
 curl -sSL https://raw.githubusercontent.com/aspnet/Home/${DNVM_BRANCH}/dnvminstall.sh \
-    | sh && source ~/.dnx/dnvm/dnvm.sh
+	| sh && source ~/.dnx/dnvm/dnvm.sh
 dnvm install $DNX_VERSION -u -a default
 
 # Add DNX to the build output
@@ -75,15 +75,15 @@ cp -r ${DNX_USER_HOME} ${BUILD_DIR}/.
 
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
-    PROJECT_JSON_FILE=${SRC_DIR}/${PROJECT}
-    echo "Project file configured in PROJECT environment variable"
+	PROJECT_JSON_FILE=${SRC_DIR}/${PROJECT}
+	echo "Project file configured in PROJECT environment variable"
 elif [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
-    PROJECT_JSON_FILE=${SRC_DIR}/$(awk -F "=" '/project/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
-    echo "Project file configured in .deployment file"
+	PROJECT_JSON_FILE=${SRC_DIR}/$(awk -F "=" '/project/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
+	echo "Project file configured in .deployment file"
 else
-    PROJECT_JSON_FILES=$(find ${SRC_DIR}/. -maxdepth 3 -iname "project.json")
-    printf 'Found %s project.json files\n' $(echo "$PROJECT_JSON_FILES" | wc -l | tr -d ' ')
-    PROJECT_JSON_FILE=$(echo "$PROJECT_JSON_FILES" | head -1)
+	PROJECT_JSON_FILES=$(find ${SRC_DIR}/. -maxdepth 3 -iname "project.json")
+	printf 'Found %s project.json files\n' $(echo "$PROJECT_JSON_FILES" | wc -l | tr -d ' ')
+	PROJECT_JSON_FILE=$(echo "$PROJECT_JSON_FILES" | head -1)
 fi
 echo "Building ${PROJECT_JSON_FILE}"
 
@@ -104,15 +104,15 @@ mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
 
 curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -sL \
-     | tar xz -C ${BUILD_DIR}
+	 | tar xz -C ${BUILD_DIR}
 if [ -e ${SRC_DIR}/Procfile ]; then
-    cp ${SRC_DIR}/Procfile ${BUILD_DIR}
+	cp ${SRC_DIR}/Procfile ${BUILD_DIR}
 else
-    ROOTS=`cd ${BUILD_DIR}; find approot/packages/ -name root`
-    if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
+	ROOTS=`cd ${BUILD_DIR}; find approot/packages/ -name root`
+	if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
 web: dnx --appbase $APP_ROOT Microsoft.Framework.ApplicationHost kestrel --configuration Release --server.urls http://+:\$PORT
 EOT
-    fi
+	fi
 fi
