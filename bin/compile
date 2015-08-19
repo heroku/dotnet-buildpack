@@ -27,6 +27,8 @@ export_env_dir ${ENV_DIR}
 
 if [ -n "$BUILD_DEBUG" ]; then
 	DNU_FLAGS=""
+	echo "DNX_VERSION: ${DNX_VERSION}"
+	echo "DNVM_BRANCH: ${DNVM_BRANCH}"
 else
 	DNU_FLAGS="--quiet"
 fi
