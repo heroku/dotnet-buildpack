@@ -51,6 +51,7 @@ export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
 mozroots --import --sync --quiet
 cp -r ~/.config ${BUILD_DIR}/.
 
+# TODO: This test doesn't seen to actually work
 if [[ -n $(find . -type f -iname package.json -o -iname bower.json -o -iname gruntfile.js) ]]
 then
 	# Install Node and grunt-cli
