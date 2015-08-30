@@ -33,6 +33,12 @@ else
 	DNU_FLAGS="--quiet"
 fi
 
+if [ -n "$UNSTABLE_TOOLCHAIN" ]; then
+	DNVM_FLAGS="-u"
+else
+	DNVM_FLAGS=""
+fi
+
 SRC_DIR=`mktemp -d`
 # Move the app source code into temporary src dir using subshell to not leak shopt
 (
@@ -79,7 +85,7 @@ mkdir -p ${DNVM_RUNTIME_CACHE_LOCATION}
 ln -s ${DNVM_RUNTIME_CACHE_LOCATION} ${DNVM_RUNTIME_LOCAL_CACHE}/runtimes
 
 # TODO: extract DNX version from global.json
-dnvm install $DNX_VERSION -u -a default
+dnvm install $DNX_VERSION $DNVM_FLAGS -a default
 
 # Add DNX to the build output
 DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
