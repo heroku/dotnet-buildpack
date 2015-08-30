@@ -54,7 +54,7 @@ mozroots --import --sync --quiet
 cp -r ~/.config ${BUILD_DIR}/.
 
 # TODO: This test doesn't seen to actually work
-if [[ -n $(find . -type f -iname package.json -o -iname bower.json -o -iname gruntfile.js) ]]
+if [[ -n $(find . -type f -iname package.json -o -iname bower.json -o -iname gruntfile.js -o -iname gulpfile.js ) ]]
 then
 	# Install Node and grunt-cli
 	NODE_PATH=`mktemp -d`
@@ -63,6 +63,12 @@ then
 	export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
 	if ! hash grunt 2>/dev/null; then
 		npm install -g grunt-cli
+	fi
+	if ! hash bower 2>/dev/null; then
+		npm install -g bower
+	fi
+	if ! hash gulp 2>/dev/null; then
+		npm install -g gulp
 	fi
 fi
 
