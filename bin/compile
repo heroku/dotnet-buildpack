@@ -71,15 +71,7 @@ then
 	curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
 		| tar xz -C ${NODE_PATH}
 	export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-	if ! hash grunt 2>/dev/null; then
-		npm install -g grunt-cli
-	fi
-	if ! hash bower 2>/dev/null; then
-		npm install -g bower
-	fi
-	if ! hash gulp 2>/dev/null; then
-		npm install -g gulp
-	fi
+	npm install -g grunt-cli bower gulp
 fi
 
 # Install DNX
