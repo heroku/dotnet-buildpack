@@ -70,6 +70,9 @@ then
 	if ! hash grunt 2>/dev/null; then
 		npm install -g grunt-cli
 	fi
+	if ! hash bower 2>/dev/null; then
+		npm install -g bower
+	fi
 fi
 
 # Install DNX
