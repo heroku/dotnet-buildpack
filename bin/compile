@@ -77,6 +77,9 @@ then
 	if ! hash bower 2>/dev/null; then
 		npm install -g bower
 	fi
+	if ! hash gulp 2>/dev/null; then
+		npm install -g gulp
+	fi
 fi
 
 # Install DNX
