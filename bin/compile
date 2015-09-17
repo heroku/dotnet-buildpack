@@ -64,6 +64,7 @@ mozroots --import --sync --quiet
 cp -r ~/.config ${BUILD_DIR}/.
 
 # TODO: This test doesn't seen to actually work
+# TODO: Maybe just run `npm install -g` and if anything is missing, install it after
 if [[ -n $(find . -type f -iname package.json -o -iname bower.json -o -iname gruntfile.js) ]]
 then
 	# Install Node and grunt-cli
