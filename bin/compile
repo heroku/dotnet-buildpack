@@ -4,9 +4,6 @@
 # fail fast
 set -e
 
-# TODO: set MONO_THREADS_PER_CPU=2000
-# https://github.com/aspnet/aspnet-docker/issues/80
-
 if [ $STACK != "cedar-14" ]; then
 	echo "Stack ${STACK} not supported" && exit 1
 fi
@@ -27,6 +24,9 @@ export_env_dir ${ENV_DIR}
 : ${NODE_VERSION:="0.12.2"}
 : ${DNVM_BRANCH:="dev"}
 : ${DNX_VERSION:="latest"}
+
+# REMARK: https://github.com/aspnet/dnx/pull/2620 and https://github.com/aspnet/aspnet-docker/issues/80
+[ -z "$MONO_THREADS_PER_CPU" ] && export MONO_THREADS_PER_CPU=50
 
 if [ -n "$BUILD_DEBUG" ]; then
 	DNU_FLAGS=""
