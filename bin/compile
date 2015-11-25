@@ -18,15 +18,10 @@ source $BUILDPACK_DIR/bin/util
 
 export_env_dir ${ENV_DIR}
 
-: ${MONO_VERSION:="4.0.1.44"}
-: ${MONO_DOWNLOAD_LOCATION:="https://github.com/friism/mono-builder/releases/download/v${MONO_VERSION}/mono-${MONO_VERSION}.tar.gz"}
 : ${LIBUV_VERSION:="1.6.0"}
 : ${NODE_VERSION:="0.12.2"}
 : ${DNVM_BRANCH:="dev"}
 : ${DNX_VERSION:="latest"}
-
-# REMARK: https://github.com/aspnet/dnx/pull/2620 and https://github.com/aspnet/aspnet-docker/issues/80
-[ -z "$MONO_THREADS_PER_CPU" ] && export MONO_THREADS_PER_CPU=50
 
 if [ -n "$BUILD_DEBUG" ]; then
 	DNU_FLAGS=""
@@ -50,18 +45,6 @@ SRC_DIR=`mktemp -d`
 )
 
 mkdir -p ${CACHE_DIR}
-
-echo "installing ${MONO_DOWNLOAD_LOCATION}"
-# TODO: use s4cmd
-curl ${MONO_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}
-# Mono expects to be running out of /app
-ln -s ${BUILD_DIR}/mono /app
-
-export PATH="/app/mono/bin:${PATH}"
-export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
-
-mozroots --import --sync --quiet
-cp -r ~/.config ${BUILD_DIR}/.
 
 # TODO: This test doesn't seen to actually work
 # TODO: Maybe just run `npm install -g` and if anything is missing, install it after
@@ -88,7 +71,11 @@ mkdir -p ${DNVM_RUNTIME_CACHE_LOCATION}
 ln -s ${DNVM_RUNTIME_CACHE_LOCATION} ${DNVM_RUNTIME_LOCAL_CACHE}/runtimes
 
 # TODO: extract DNX version from global.json
-dnvm install $DNX_VERSION $DNVM_FLAGS -a default
+dnvm install $DNX_VERSION $DNVM_FLAGS -alias default -r coreclr
+
+# Make sure DNX bin is in path
+DNX_BIN=~/.dnx/runtimes/`dnvm alias default`/bin
+export PATH=${PATH}:${DNX_BIN}
 
 # Add DNX to the build output
 DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
@@ -115,12 +102,9 @@ mkdir -p ${DNU_LOCAL_CACHE}
 mkdir -p ${DNU_CACHE_LOCATION}
 ln -s ${DNU_CACHE_LOCATION} ${DNU_LOCAL_CACHE}/cache 
 
-dnu restore $DNU_FLAGS ${PROJECT_JSON_FILE}
+dnu restore $DNU_FLAGS --runtime coreclr ${PROJECT_JSON_FILE}
 
-dnu publish --out ${BUILD_DIR} $DNU_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
-
-# Clean out core-stuff that we don't need in the slug
-find ${BUILD_DIR} -iname dnxcore50 -print0 | xargs -r -0 rm --
+dnu publish --out ${BUILD_DIR} $DNU_FLAGS --runtime active --framework dnxcore50 --no-source --configuration Release ${PROJECT_JSON_FILE}
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
@@ -134,7 +118,7 @@ else
 	if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: ./kestrel --server.urls http://+:\$PORT
+web: ./approot/web --server.urls http://+:\$PORT
 EOT
 	fi
 fi
