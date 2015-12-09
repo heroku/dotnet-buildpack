@@ -48,7 +48,7 @@ SRC_DIR=`mktemp -d`
 curl -LOs https://mirrors.kernel.org/ubuntu/pool/main/libu/libunwind/libunwind8_1.1-3.2_amd64.deb
 mkdir -p ${BUILD_DIR}/.apt
 dpkg -x libunwind8_1.1-3.2_amd64.deb $BUILD_DIR/.apt/
-export PATH="$BUILD_DIR/.apt/usr/lib:$PATH"
+export LD_LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
 
 mkdir -p $BUILD_DIR/.profile.d
 cat <<EOF >$BUILD_DIR/.profile.d/000_apt.sh
