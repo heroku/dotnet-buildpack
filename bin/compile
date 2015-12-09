@@ -74,16 +74,17 @@ ln -s ${DNVM_RUNTIME_CACHE_LOCATION} ${DNVM_RUNTIME_LOCAL_CACHE}/runtimes
 dnvm install $DNX_VERSION $DNVM_FLAGS -alias default -r coreclr
 
 # Make sure DNX bin is in path
-DNX_BIN=~/.dnx/runtimes/`dnvm alias default`/bin
+DNX_DIR_NAME=`dnvm alias default`
+DNX_BIN=~/.dnx/runtimes/${DNX_DIR_NAME}/bin
 export PATH=${PATH}:${DNX_BIN}
 
 # Add DNX to the build output
 DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
 mkdir -p ${DNX_BUILD_LOCATION}
-cp -r ~/.dnx/runtimes/`dnvm alias default` ${DNX_BUILD_LOCATION}
+cp -r ~/.dnx/runtimes/${DNX_DIR_NAME} ${DNX_BUILD_LOCATION}
 
 cat <<EOF >$BUILD_DIR/.profile.d/000_dnx.sh
-export PATH="`find .dnx/runtimes -type d -name bin`:\$PATH"
+export PATH="\$HOME/.dnx/runtimes/$DNX_DIR_NAME:\$PATH"
 EOF
 
 # Build the project
