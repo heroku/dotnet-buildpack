@@ -114,8 +114,10 @@ curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}
 	 | tar xz -C ${BUILD_DIR}
 cat <<EOF >$BUILD_DIR/.profile.d/000_libuv.sh
 export LD_LIBRARY_PATH="\$HOME/libuv/lib:\$LD_LIBRARY_PATH"
+export PATH="`find .dnx/runtimes -type d -name bin`:\$PATH"
 EOF
 
+# TODO: read Procfile from `commands` in project.json
 if [ -e ${SRC_DIR}/Procfile ]; then
 	cp ${SRC_DIR}/Procfile ${BUILD_DIR}
 else
@@ -123,7 +125,7 @@ else
 	if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
 	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: ./approot/web --server.urls http://+:\$PORT
+web: dnx web --server.urls http://+:\$PORT
 EOT
 	fi
 fi
