@@ -82,6 +82,10 @@ DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
 mkdir -p ${DNX_BUILD_LOCATION}
 cp -r ~/.dnx/runtimes/`dnvm alias default` ${DNX_BUILD_LOCATION}
 
+cat <<EOF >$BUILD_DIR/.profile.d/000_dnx.sh
+export PATH="`find .dnx/runtimes -type d -name bin`:\$PATH"
+EOF
+
 # Build the project
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
@@ -114,7 +118,6 @@ curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}
 	 | tar xz -C ${BUILD_DIR}
 cat <<EOF >$BUILD_DIR/.profile.d/000_libuv.sh
 export LD_LIBRARY_PATH="\$HOME/libuv/lib:\$LD_LIBRARY_PATH"
-export PATH="`find .dnx/runtimes -type d -name bin`:\$PATH"
 EOF
 
 # TODO: read Procfile from `commands` in project.json
