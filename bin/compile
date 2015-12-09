@@ -44,19 +44,18 @@ SRC_DIR=`mktemp -d`
 	mv ${BUILD_DIR}/* ${SRC_DIR}
 )
 
-mkdir -p ${CACHE_DIR}
+# TODO: factor this out into method
+curl -LOs https://mirrors.kernel.org/ubuntu/pool/main/libu/libunwind/libunwind8_1.1-3.2_amd64.deb
+mkdir -p ${BUILD_DIR}/.apt
+dpkg -x libunwind8_1.1-3.2_amd64.deb $BUILD_DIR/.apt/
+export PATH="$BUILD_DIR/.apt/usr/lib:$PATH"
 
-# TODO: This test doesn't seen to actually work
-# TODO: Maybe just run `npm install -g` and if anything is missing, install it after
-if [[ -n $(find . -type f -iname package.json -o -iname bower.json -o -iname gruntfile.js) ]]
-then
-	# Install Node and grunt-cli
-	NODE_PATH=`mktemp -d`
-	curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
-		| tar xz -C ${NODE_PATH}
-	export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-	npm install -g grunt-cli bower gulp
-fi
+mkdir -p $BUILD_DIR/.profile.d
+cat <<EOF >$BUILD_DIR/.profile.d/000_apt.sh
+export PATH="\$HOME/.apt/usr/lib:\$PATH"
+EOF
+
+mkdir -p ${CACHE_DIR}
 
 # Install DNX
 # TODO: consider making this not dependent on GitHub being up
@@ -82,6 +81,7 @@ DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
 mkdir -p ${DNX_BUILD_LOCATION}
 cp -r ~/.dnx/runtimes/`dnvm alias default` ${DNX_BUILD_LOCATION}
 
+# Build the project
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
 	PROJECT_JSON_FILE=${SRC_DIR}/${PROJECT}
@@ -104,7 +104,7 @@ ln -s ${DNU_CACHE_LOCATION} ${DNU_LOCAL_CACHE}/cache
 
 dnu restore $DNU_FLAGS --runtime coreclr ${PROJECT_JSON_FILE}
 
-dnu publish --out ${BUILD_DIR} $DNU_FLAGS --runtime active --framework dnxcore50 --no-source --configuration Release ${PROJECT_JSON_FILE}
+dnu publish --out ${BUILD_DIR} $DNU_FLAGS --runtime active --no-source --configuration Release ${PROJECT_JSON_FILE}
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
