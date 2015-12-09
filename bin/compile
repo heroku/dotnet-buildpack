@@ -55,6 +55,8 @@ cat <<EOF >$BUILD_DIR/.profile.d/000_apt.sh
 export PATH="\$HOME/.apt/usr/lib:\$PATH"
 EOF
 
+ls $BUILD_DIR/.apt/usr/lib
+
 mkdir -p ${CACHE_DIR}
 
 # Install DNX
