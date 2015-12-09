@@ -108,9 +108,6 @@ dnu restore $DNU_FLAGS --runtime coreclr ${PROJECT_JSON_FILE}
 
 dnu publish --out ${BUILD_DIR} $DNU_FLAGS --runtime active --no-source --configuration Release ${PROJECT_JSON_FILE}
 
-mkdir -p ${BUILD_DIR}/.profile.d
-cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
-
 curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -sL \
 	 | tar xz -C ${BUILD_DIR}
 cat <<EOF >$BUILD_DIR/.profile.d/000_libuv.sh
