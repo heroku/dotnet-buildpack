@@ -83,10 +83,6 @@ DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
 mkdir -p ${DNX_BUILD_LOCATION}
 cp -r ~/.dnx/runtimes/${DNX_DIR_NAME} ${DNX_BUILD_LOCATION}
 
-cat <<EOF >$BUILD_DIR/.profile.d/000_dnx.sh
-export PATH="\$HOME/.dnx/runtimes/DNX_DIR_NAME:\$PATH"
-EOF
-
 # Build the project
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
