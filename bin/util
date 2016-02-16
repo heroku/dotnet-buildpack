@@ -14,7 +14,7 @@ function conditional_download() {
 
 function export_env_dir() {
   local env_dir=$1
-  local whitelist_regex=${2:-'(DEPENDENCY_S3_BUCKET_PATH|MONO_VERSION|LIBUV_VERSION|NODE_VERSION|PROJECT|BUILD_DEBUG|DNVM_BRANCH|DNX_VERSION)$'}
+  local whitelist_regex=${2:-'(LIBUV_VERSION|NODEJS_VERSION|DOTNET_SDK_VERSION|DOTNET_RUNTIME_VERSION|PROJECT|LIBUNWIND_VERSION)$'}
   local blacklist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
   if [ -d "$env_dir" ]; then
     for e in $(ls $env_dir); do

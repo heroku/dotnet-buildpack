@@ -1,16 +1,14 @@
 **Please note:** This buildpack is an experimental project and is not officially supported.
 
-# ASP.NET 5 Buildpack
+# .NET Core Buildpack
 
-This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for building [ASP.NET 5](http://www.asp.net/vnext/overview/aspnet-vnext/aspnet-5-overview) apps using [`project.json` files](https://github.com/aspnet/Home/wiki/Project.json-file) and the [kpm package manager](https://github.com/aspnet/Home/wiki/Package-Manager).
-
-[Mono](http://www.mono-project.com/) is bundled for runtime execution.
+This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for building [.NET Core](https://www.microsoft.com/net/core) apps using [`project.json` files](https://docs.microsoft.com/en-us/dotnet/articles/core/tools/project-json).
 
 ## Usage
 
 Example usage:
 
-    $ heroku create --buildpack http://github.com/heroku/dotnet-buildpack.git
+    $ heroku create --buildpack http://github.com/friism/dotnet-buildpack.git
     $ git push heroku master
 
 The buildpack will detect your app as ASP.NET 5 if it has `project.json`. If the source code you want to build contains multiple `project.json` files, you can use a [`.deployment`](https://github.com/projectkudu/kudu/wiki/Customizing-deployments) or set a `$PROJECT` config var to control which one is built.
