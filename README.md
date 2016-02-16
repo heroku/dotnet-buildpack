@@ -1,3 +1,5 @@
+**Please note:** This buildpack is an experimental project and is not officially supported.
+
 # ASP.NET 5 Buildpack
 
 This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for building [ASP.NET 5](http://www.asp.net/vnext/overview/aspnet-vnext/aspnet-5-overview) apps using [`project.json` files](https://github.com/aspnet/Home/wiki/Project.json-file) and the [kpm package manager](https://github.com/aspnet/Home/wiki/Package-Manager).
