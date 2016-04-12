@@ -46,7 +46,9 @@ SRC_DIR=`mktemp -d`
 (
 	shopt -s dotglob
 	mv ${BUILD_DIR}/* ${SRC_DIR}
-	[ -d "${SRC_DIR}/.heroku" ] && mv ${SRC_DIR}/.heroku ${BUILD_DIR}
+	if [ -d "${SRC_DIR}/.heroku" ]; then
+		mv ${SRC_DIR}/.heroku ${BUILD_DIR}
+	fi
 )
 
 mkdir -p ${CACHE_DIR}
