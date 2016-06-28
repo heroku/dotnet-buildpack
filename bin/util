@@ -41,7 +41,7 @@ function apt_install(){
   apt-get $apt_options clean | indent
   
   topic "Updating apt caches"
-  apt-get $apt_options update | indent
+  apt-get  --allow-unauthenticated $apt_options update | indent
 
   for package in "$@"; do
     if [[ $package == *deb ]]; then

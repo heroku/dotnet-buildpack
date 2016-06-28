@@ -22,7 +22,7 @@ export_env_dir ${ENV_DIR}
 : ${CORE_SCRIPT_LOCATION:="https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0/scripts/obtain/dotnet-install.sh"}
 : ${NODE_VERSION:="4.4.4"}
 : ${CORE_VERSION:="latest"}
-: ${CORE_CHANNEL:="beta"}
+: ${CORE_CHANNEL:="preview"}
 
 if [ -n "$BUILD_DEBUG" ]; then
 	CORE_CONFIGURATION="Debug"
@@ -64,13 +64,21 @@ if [ -n "$(find ${SRC_DIR}/global.json)" ]; then
 	CORE_VERSION=$(ruby -rjson -e "j = JSON.parse(File.open('${SRC_DIR}/global.json','r:bom|utf-8').read); unless j['sdk'].nil? ; puts j['sdk']['version'];end")
 	if [ -z "${CORE_VERSION}" ]; then
 		CORE_VERSION="latest"
-	elif [[ "${CORE_VERSION}" != "latest" && "${CORE_VERSION}" > "1.0.0-preview1-002702" ]]; then
-		CORE_CHANNEL="preview"
+	elif [[ "${CORE_VERSION}" != "latest" ]]; then
+		if [ ! "${CORE_VERSION}" > "1.0.0-preview1-002702" ]; then
+			CORE_CHANNEL="beta"
+		elif [ "${CORE_VERSION}" > "1.0.0-preview2-003121" ]; then
+			#TODO
+			CORE_DOWNLOAD_LOCATION="https://dotnetcli.blob.core.windows.net/dotnet/Sdk/rel-1.0.0/dotnet-dev-ubuntu-x64.latest.tar.gz"
+		fi
 	fi
 fi
 
-if [[ "${CORE_VERSION}" == "latest" && -e "${DEPLOYMENT_FILE_LOCATION}" && $(awk -F "=" '/channel/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ') == "preview" ]]; then
-	CORE_CHANNEL="preview"
+if [[ "${CORE_VERSION}" == "latest" && -e "${DEPLOYMENT_FILE_LOCATION}" ]]; then
+	CORE_CHANNEL_TMP=$(awk -F "=" '/channel/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
+	if [ ! -z "${CORE_CHANNEL_TMP}" ]; then
+		CORE_CHANNEL="${CORE_CHANNEL_TMP}"
+	fi
 fi
 
 CORE_VERSION_FIRST="$CORE_VERSION"
@@ -86,7 +94,7 @@ apt_install libunwind8 gettext
 
 mkdir -p ${BUILD_DIR}/dotnet
 
-echo "Installing .NET CORE ${CORE_VERSION}"
+echo "Installing .NET CORE ${CORE_VERSION} from ${CORE_DOWNLOAD_LOCATION}"
 # dotnet-install.sh using `ldconfig` which search pkg in `/lib` or `/usr/lib`. So I change it to binaries.
 #curl -sSL ${CORE_SCRIPT_LOCATION} | bash /dev/stdin --version ${CORE_VERSION} --install-dir ${BUILD_DIR}/dotnet
 curl ${CORE_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}/dotnet
