@@ -13,6 +13,6 @@ Example usage:
 
 The buildpack will detect your app as ASP.NET Core if it has `project.json`. If the source code you want to build contains multiple `project.json` files, you can use a [`.deployment`](https://github.com/projectkudu/kudu/wiki/Customizing-deployments) or set a `$PROJECT` config var to control which one is built.
 
-## Attension
+## Attention
 1. You should configure a unique compatible framework in `project.json`.
 2. Your Project should use `Microsoft.Extensions.Configuration.CommandLine` package.
