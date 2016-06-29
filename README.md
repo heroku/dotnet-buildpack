@@ -8,7 +8,7 @@ This is a [Heroku buildpack](http://devcenter.heroku.com/articles/buildpack) for
 
 Example usage:
 
-    $ heroku create --buildpack http://github.com/heroku/dotnet-buildpack.git
+    $ heroku create --buildpack http://github.com/noliar/dotnet-buildpack.git
     $ git push heroku master
 
 The buildpack will detect your app as ASP.NET Core if it has `project.json`. If the source code you want to build contains multiple `project.json` files, you can use a [`.deployment`](https://github.com/projectkudu/kudu/wiki/Customizing-deployments) or set a `$PROJECT` config var to control which one is built.
