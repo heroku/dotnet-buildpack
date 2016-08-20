@@ -18,28 +18,18 @@ source $BUILDPACK_DIR/bin/util
 
 export_env_dir ${ENV_DIR}
 
-: ${MONO_VERSION:="4.0.1.44"}
-: ${MONO_DOWNLOAD_LOCATION:="https://github.com/friism/mono-builder/releases/download/v${MONO_VERSION}/mono-${MONO_VERSION}.tar.gz"}
-: ${LIBUV_VERSION:="1.6.0"}
-: ${NODE_VERSION:="0.12.2"}
-: ${DNVM_BRANCH:="dev"}
-: ${DNX_VERSION:="latest"}
-
-# REMARK: https://github.com/aspnet/dnx/pull/2620 and https://github.com/aspnet/aspnet-docker/issues/80
-[ -z "$MONO_THREADS_PER_CPU" ] && export MONO_THREADS_PER_CPU=50
+: ${CORE_VERSION:="latest"}
+: ${CORE_SCRIPT_LOCATION:="https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0/scripts/obtain/dotnet-install.sh"}
+: ${NODE_VERSION:="4.4.4"}
+: ${CORE_VERSION:="latest"}
+: ${CORE_CHANNEL:="preview"}
 
 if [ -n "$BUILD_DEBUG" ]; then
-	DNU_FLAGS=""
-	echo "DNX_VERSION: ${DNX_VERSION}"
-	echo "DNVM_BRANCH: ${DNVM_BRANCH}"
+	CORE_CONFIGURATION="Debug"
+	CORE_ENVIRONMENT="--environment Development"
 else
-	DNU_FLAGS="--quiet"
-fi
-
-if [ -n "$UNSTABLE_TOOLCHAIN" ]; then
-	DNVM_FLAGS="-u"
-else
-	DNVM_FLAGS=""
+	CORE_CONFIGURATION="Release"
+	CORE_ENVIRONMENT=""
 fi
 
 SRC_DIR=`mktemp -d`
@@ -51,51 +41,68 @@ SRC_DIR=`mktemp -d`
 
 mkdir -p ${CACHE_DIR}
 
-echo "installing ${MONO_DOWNLOAD_LOCATION}"
-# TODO: use s4cmd
-curl ${MONO_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}
-# Mono expects to be running out of /app
-ln -s ${BUILD_DIR}/mono /app
-
-export PATH="/app/mono/bin:${PATH}"
-export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
-
-mozroots --import --sync --quiet
-cp -r ~/.config ${BUILD_DIR}/.
-
 # TODO: This test doesn't seen to actually work
 # TODO: Maybe just run `npm install -g` and if anything is missing, install it after
-if [[ -n $(find . -type f -iname package.json -o -iname bower.json -o -iname gruntfile.js) ]]
+if [[ -n $(find ${SRC_DIR} -type f -iname package.json -o -iname bower.json) ]]
 then
-	# Install Node and grunt-cli
+	echo "Installing Node"
 	NODE_PATH=`mktemp -d`
 	curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
 		| tar xz -C ${NODE_PATH}
 	export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
-	npm install -g grunt-cli bower gulp
+	echo "Installing bower"
+	if ! hash bower 2>/dev/null; then
+		npm install -g bower
+	fi
 fi
 
-# Install DNX
-# TODO: consider making this not dependent on GitHub being up
-touch ~/.profile
-curl -sSL https://raw.githubusercontent.com/aspnet/Home/${DNVM_BRANCH}/dnvminstall.sh \
-	| sh && source ~/.dnx/dnvm/dnvm.sh
-
-export DNVM_RUNTIME_LOCAL_CACHE="/app/.dnx"
-export DNVM_RUNTIME_CACHE_LOCATION="${CACHE_DIR}/dnx/runtimes"
-mkdir -p ${DNVM_RUNTIME_LOCAL_CACHE}
-mkdir -p ${DNVM_RUNTIME_CACHE_LOCATION}
-ln -s ${DNVM_RUNTIME_CACHE_LOCATION} ${DNVM_RUNTIME_LOCAL_CACHE}/runtimes
-
-# TODO: extract DNX version from global.json
-dnvm install $DNX_VERSION $DNVM_FLAGS -a default
-
-# Add DNX to the build output
-DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
-mkdir -p ${DNX_BUILD_LOCATION}
-cp -r ~/.dnx/runtimes/`dnvm alias default` ${DNX_BUILD_LOCATION}
-
+# Install .NET Core
+echo "Get .NET Core Version and Channel from the PROJECT"
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
+if [ -n "$(find ${SRC_DIR}/global.json)" ]; then
+	echo "Get version from global.json"
+	CORE_VERSION=$(ruby -rjson -e "j = JSON.parse(File.open('${SRC_DIR}/global.json','r:bom|utf-8').read); unless j['sdk'].nil? ; puts j['sdk']['version'];end")
+	if [ -z "${CORE_VERSION}" ]; then
+		CORE_VERSION="latest"
+	elif [[ "${CORE_VERSION}" != "latest" ]]; then
+		if [ ! "${CORE_VERSION}" > "1.0.0-preview1-002702" ]; then
+			CORE_CHANNEL="beta"
+		elif [ "${CORE_VERSION}" > "1.0.0-preview2-003121" ]; then
+			#TODO
+			CORE_DOWNLOAD_LOCATION="https://dotnetcli.blob.core.windows.net/dotnet/Sdk/rel-1.0.0/dotnet-dev-ubuntu-x64.latest.tar.gz"
+		fi
+	fi
+fi
+
+if [[ "${CORE_VERSION}" == "latest" && -e "${DEPLOYMENT_FILE_LOCATION}" ]]; then
+	CORE_CHANNEL_TMP=$(awk -F "=" '/channel/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
+	if [ ! -z "${CORE_CHANNEL_TMP}" ]; then
+		CORE_CHANNEL="${CORE_CHANNEL_TMP}"
+	fi
+fi
+
+CORE_VERSION_FIRST="$CORE_VERSION"
+
+if [[ "${CORE_VERSION}" == "latest" ]]; then
+	CORE_VERSION_FIRST="Latest"
+fi
+
+: ${CORE_DOWNLOAD_LOCATION:="https://dotnetcli.blob.core.windows.net/dotnet/${CORE_CHANNEL}/Binaries/${CORE_VERSION_FIRST}/dotnet-dev-ubuntu-x64.${CORE_VERSION}.tar.gz"}
+
+echo "Installing the dependencies"
+apt_install libunwind8 gettext
+
+mkdir -p ${BUILD_DIR}/dotnet
+
+echo "Installing .NET CORE ${CORE_VERSION} from ${CORE_DOWNLOAD_LOCATION}"
+# dotnet-install.sh using `ldconfig` which search pkg in `/lib` or `/usr/lib`. So I change it to binaries.
+#curl -sSL ${CORE_SCRIPT_LOCATION} | bash /dev/stdin --version ${CORE_VERSION} --install-dir ${BUILD_DIR}/dotnet
+curl ${CORE_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}/dotnet
+ln -s ${BUILD_DIR}/dotnet /app
+
+export PATH="/app/dotnet:${PATH}"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}"
+
 if [ -n "$PROJECT" ]; then
 	PROJECT_JSON_FILE=${SRC_DIR}/${PROJECT}
 	echo "Project file configured in PROJECT environment variable"
@@ -103,38 +110,42 @@ elif [ -e ${DEPLOYMENT_FILE_LOCATION} ]; then
 	PROJECT_JSON_FILE=${SRC_DIR}/$(awk -F "=" '/project/ {print $2}' ${DEPLOYMENT_FILE_LOCATION} | tr -d ' ')
 	echo "Project file configured in .deployment file"
 else
-	PROJECT_JSON_FILES=$(find ${SRC_DIR}/. -maxdepth 3 -iname "project.json")
+	PROJECT_JSON_FILES=$(find ${SRC_DIR}/. -maxdepth 5 -iname "project.json")
 	printf 'Found %s project.json files\n' $(echo "$PROJECT_JSON_FILES" | wc -l | tr -d ' ')
 	PROJECT_JSON_FILE=$(echo "$PROJECT_JSON_FILES" | head -1)
+	PROJECT_JSON_FILE=$(readlink -m $PROJECT_JSON_FILE)
 fi
 echo "Building ${PROJECT_JSON_FILE}"
 
-export DNU_LOCAL_CACHE="/app/.local/share/dnu"
-export DNU_CACHE_LOCATION="${CACHE_DIR}/dnu/cache"
-mkdir -p ${DNU_LOCAL_CACHE}
-mkdir -p ${DNU_CACHE_LOCATION}
-ln -s ${DNU_CACHE_LOCATION} ${DNU_LOCAL_CACHE}/cache 
+PROJECT_DIR="$PROJECT_JSON_FILE"
+if [[ -f $PROJECT_JSON_FILE ]]; then
+	PROJECT_DIR=$(dirname $PROJECT_JSON_FILE)
+fi
 
-dnu restore $DNU_FLAGS ${PROJECT_JSON_FILE}
+echo "Reading App Name from project.json"
+PROJECT_DIR_NAME=$(basename $PROJECT_DIR)
+PROJECT_NAME=$(ruby -rjson -e "j = JSON.parse(File.open('${PROJECT_DIR}/project.json','r:bom|utf-8').read); unless j['buildOptions'].nil? ; puts j['buildOptions']['outputName'];end")
+echo "${PROJECT_NAME:=$PROJECT_DIR_NAME}"
 
-dnu publish --out ${BUILD_DIR} $DNU_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
+echo "Restoring the packages"
+dotnet restore ${SRC_DIR}
 
-# Clean out core-stuff that we don't need in the slug
-find ${BUILD_DIR} -iname dnxcore50 -print0 | xargs -r -0 rm --
+# configure some npm command during building
+export PATH="${PROJECT_DIR}/node_modules/.bin:${PATH}"
+
+echo "Publishing the app"
+# Publish to heroku_output
+dotnet publish ${PROJECT_JSON_FILE} --output ${BUILD_DIR}/heroku_output --configuration ${CORE_CONFIGURATION}
+
+echo "Publish Successed"
 
 mkdir -p ${BUILD_DIR}/.profile.d
 cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
 
-curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -sL \
-	 | tar xz -C ${BUILD_DIR}
 if [ -e ${SRC_DIR}/Procfile ]; then
 	cp ${SRC_DIR}/Procfile ${BUILD_DIR}
 else
-	ROOTS=`cd ${BUILD_DIR}; find approot/packages/ -name root`
-	if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
-	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: ./kestrel --server.urls http://+:\$PORT
+web: cd \$HOME/heroku_output && dotnet ./${PROJECT_NAME}.dll --server.urls http://+:\$PORT ${CORE_ENVIRONMENT}
 EOT
-	fi
 fi
