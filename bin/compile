@@ -65,11 +65,13 @@ if [ -n "$(find ${SRC_DIR}/global.json)" ]; then
 	if [ -z "${CORE_VERSION}" ]; then
 		CORE_VERSION="latest"
 	elif [[ "${CORE_VERSION}" != "latest" ]]; then
-		if [ ! "${CORE_VERSION}" > "1.0.0-preview1-002702" ]; then
-			CORE_CHANNEL="beta"
-		elif [ "${CORE_VERSION}" > "1.0.0-preview2-003121" ]; then
+		if [[ "${CORE_VERSION}" == "1.0.0-preview2.1-003155" ]]; then
+			CORE_DOWNLOAD_LOCATION="https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/1.0.0-preview2.1-003155/dotnet-dev-ubuntu-x64.1.0.0-preview2.1-003155.tar.gz"
+		elif [[ "${CORE_VERSION}" > "1.0.0-preview2-003121" ]]; then
 			#TODO
 			CORE_DOWNLOAD_LOCATION="https://dotnetcli.blob.core.windows.net/dotnet/Sdk/rel-1.0.0/dotnet-dev-ubuntu-x64.latest.tar.gz"
+		elif [[ ! "${CORE_VERSION}" > "1.0.0-preview1-002702" ]]; then
+			CORE_CHANNEL="beta"
 		fi
 	fi
 fi
@@ -79,6 +81,11 @@ if [[ "${CORE_VERSION}" == "latest" && -e "${DEPLOYMENT_FILE_LOCATION}" ]]; then
 	if [ ! -z "${CORE_CHANNEL_TMP}" ]; then
 		CORE_CHANNEL="${CORE_CHANNEL_TMP}"
 	fi
+fi
+
+# Temporary fix noliar/dotnet-buildpack#8
+if [[ "${CORE_VERSION}" == "latest" && "${CORE_CHANNEL}" == "preview" ]]; then
+	CORE_VERSION="1.0.0-preview2-003121"
 fi
 
 CORE_VERSION_FIRST="$CORE_VERSION"
