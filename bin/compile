@@ -134,6 +134,6 @@ if [ -e ${SRC_DIR}/Procfile ]; then
 	cp ${SRC_DIR}/Procfile ${BUILD_DIR}
 else
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: ASPNETCORE_URLS='http://+:\$PORT' dotnet ./app.dll -c Release
+web: ASPNETCORE_URLS='http://+:\$PORT' dotnet ./app.dll
 EOT
 fi
