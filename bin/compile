@@ -18,83 +18,82 @@ source $BUILDPACK_DIR/bin/util
 
 export_env_dir ${ENV_DIR}
 
-: ${MONO_VERSION:="4.0.1.44"}
-: ${MONO_DOWNLOAD_LOCATION:="https://github.com/friism/mono-builder/releases/download/v${MONO_VERSION}/mono-${MONO_VERSION}.tar.gz"}
-: ${LIBUV_VERSION:="1.6.0"}
-: ${NODE_VERSION:="0.12.2"}
-: ${DNVM_BRANCH:="dev"}
-: ${DNX_VERSION:="latest"}
+: ${LIBUV_VERSION:="1.10.1"}
+: ${NODEJS_VERSION:="6.9.1"}
+: ${DOTNET_SDK_VERSION:="1.0.0-preview2-1-003177"}
+: ${DOTNET_RUNTIME_VERSION:="1.1.0"}
+: ${LIBUNWIND_VERSION:="1.1-4.1"}
 
-# REMARK: https://github.com/aspnet/dnx/pull/2620 and https://github.com/aspnet/aspnet-docker/issues/80
-[ -z "$MONO_THREADS_PER_CPU" ] && export MONO_THREADS_PER_CPU=50
+export NUGET_XMLDOC_MODE=skip
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
-if [ -n "$BUILD_DEBUG" ]; then
-	DNU_FLAGS=""
-	echo "DNX_VERSION: ${DNX_VERSION}"
-	echo "DNVM_BRANCH: ${DNVM_BRANCH}"
-else
-	DNU_FLAGS="--quiet"
-fi
-
-if [ -n "$UNSTABLE_TOOLCHAIN" ]; then
-	DNVM_FLAGS="-u"
-else
-	DNVM_FLAGS=""
-fi
-
-SRC_DIR=`mktemp -d`
+SRC_DIR=`mktemp -d`/app
+mkdir -p ${SRC_DIR}
 # Move the app source code into temporary src dir using subshell to not leak shopt
 (
 	shopt -s dotglob
 	mv ${BUILD_DIR}/* ${SRC_DIR}
 )
 
+mkdir -p ${BUILD_DIR}/.profile.d
 mkdir -p ${CACHE_DIR}
 
-echo "installing ${MONO_DOWNLOAD_LOCATION}"
-# TODO: use s4cmd
-curl ${MONO_DOWNLOAD_LOCATION} -Ls | tar xz -C ${BUILD_DIR}
-# Mono expects to be running out of /app
-ln -s ${BUILD_DIR}/mono /app
+# Get libunwind
+# TODO: factor this out into method
+LIBUNWIND_DEB_DIR=${CACHE_DIR}/deb/libunwind/${LIBUNWIND_VERSION}
+if [ ! -f ${LIBUNWIND_DEB_DIR}/libunwind.deb ]; then
+	rm -rf ${CACHE_DIR}/deb/libunwind/* || true
+	mkdir -p ${LIBUNWIND_DEB_DIR}
 
-export PATH="/app/mono/bin:${PATH}"
-export LD_LIBRARY_PATH="/app/mono/lib:${LD_LIBRARY_PATH}"
+	echo "Downloading libunwind version ${LIBUNWIND_VERSION}"
+	curl -o ${LIBUNWIND_DEB_DIR}/libunwind.deb -sSL https://mirrors.kernel.org/ubuntu/pool/main/libu/libunwind/libunwind8_${LIBUNWIND_VERSION}_amd64.deb
+fi
+mkdir -p ${BUILD_DIR}/.apt
+dpkg -x ${LIBUNWIND_DEB_DIR}/libunwind.deb $BUILD_DIR/.apt/
+export LD_LIBRARY_PATH="$BUILD_DIR/.apt/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+cat <<EOF >$BUILD_DIR/.profile.d/000_apt.sh
+export LD_LIBRARY_PATH="\$HOME/.apt/usr/lib/x86_64-linux-gnu:\$LD_LIBRARY_PATH"
+EOF
 
-mozroots --import --sync --quiet
-cp -r ~/.config ${BUILD_DIR}/.
+# Get Dotnet Core
+DOTNET_CACHE_LOCATION=${CACHE_DIR}/dotnet/${DOTNET_SDK_VERSION}
+if [ ! -d ${DOTNET_CACHE_LOCATION} ]; then
+	rm -rf ${CACHE_DIR}/dotnet/* || true
+	mkdir -p ${DOTNET_CACHE_LOCATION}/{sdk,runtime}
 
-# TODO: This test doesn't seen to actually work
-# TODO: Maybe just run `npm install -g` and if anything is missing, install it after
-if [[ -n $(find . -type f -iname package.json -o -iname bower.json -o -iname gruntfile.js) ]]
-then
-	# Install Node and grunt-cli
-	NODE_PATH=`mktemp -d`
-	curl https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz -Ls \
-		| tar xz -C ${NODE_PATH}
-	export PATH="${NODE_PATH}/node-v${NODE_VERSION}-linux-x64/bin:${PATH}"
+	echo "Downloading .NET SDK version ${DOTNET_SDK_VERSION} and runtime version ${DOTNET_RUNTIME_VERSION}"
+
+	DOTNET_SDK_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/$DOTNET_SDK_VERSION/dotnet-dev-ubuntu-x64.$DOTNET_SDK_VERSION.tar.gz
+	curl -sSL ${DOTNET_SDK_DOWNLOAD_URL} | tar xz -C ${DOTNET_CACHE_LOCATION}/sdk
+	find ${DOTNET_CACHE_LOCATION}/sdk/sdk/${DOTNET_SDK_VERSION}/runtimes/* -maxdepth 0 ! -name unix -exec rm -r {} +
+	rm -f ${DOTNET_CACHE_LOCATION}/sdk/sdk/${DOTNET_SDK_VERSION}/nuGetPackagesArchive.lzma
+
+	DOTNET_RUNTIME_DOWNLOAD_URL=http://download.microsoft.com/download/A/F/6/AF610E6A-1D2D-47D8-80B8-F178951A0C72/Binaries/dotnet-ubuntu-x64.${DOTNET_RUNTIME_VERSION}.tar.gz
+	curl -sSL ${DOTNET_RUNTIME_DOWNLOAD_URL} | tar xz -C ${DOTNET_CACHE_LOCATION}/runtime
+fi
+export PATH="${DOTNET_CACHE_LOCATION}/sdk:$PATH"
+cp -r ${DOTNET_CACHE_LOCATION}/runtime ${BUILD_DIR}/dotnet
+cat <<EOF >$BUILD_DIR/.profile.d/000_dotnet.sh
+export PATH="\$HOME/dotnet:\$PATH"
+EOF
+
+# Get Node.js
+NODEJS_CACHE_LOCATION=${CACHE_DIR}/nodejs/${NODEJS_VERSION}
+export PATH="${NODEJS_CACHE_LOCATION}/node-v${NODEJS_VERSION}-linux-x64/bin:$PATH"
+if [ ! -d ${NODEJS_CACHE_LOCATION} ]; then
+	rm -rf ${CACHE_DIR}/nodejs/* || true
+	NODEJS_DOWNLOAD_URL=https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-linux-x64.tar.xz
+
+	mkdir -p ${NODEJS_CACHE_LOCATION}
+
+	echo "Downloading Node.js version ${NODEJS_VERSION}"
+	curl -sSL ${NODEJS_DOWNLOAD_URL} | tar xJ -C ${NODEJS_CACHE_LOCATION}
 	npm install -g grunt-cli bower gulp
 fi
+npm config set cache ${NODEJS_CACHE_LOCATION}/npm/cache -g
 
-# Install DNX
-# TODO: consider making this not dependent on GitHub being up
-touch ~/.profile
-curl -sSL https://raw.githubusercontent.com/aspnet/Home/${DNVM_BRANCH}/dnvminstall.sh \
-	| sh && source ~/.dnx/dnvm/dnvm.sh
-
-export DNVM_RUNTIME_LOCAL_CACHE="/app/.dnx"
-export DNVM_RUNTIME_CACHE_LOCATION="${CACHE_DIR}/dnx/runtimes"
-mkdir -p ${DNVM_RUNTIME_LOCAL_CACHE}
-mkdir -p ${DNVM_RUNTIME_CACHE_LOCATION}
-ln -s ${DNVM_RUNTIME_CACHE_LOCATION} ${DNVM_RUNTIME_LOCAL_CACHE}/runtimes
-
-# TODO: extract DNX version from global.json
-dnvm install $DNX_VERSION $DNVM_FLAGS -a default
-
-# Add DNX to the build output
-DNX_BUILD_LOCATION=${BUILD_DIR}/.dnx/runtimes/
-mkdir -p ${DNX_BUILD_LOCATION}
-cp -r ~/.dnx/runtimes/`dnvm alias default` ${DNX_BUILD_LOCATION}
-
+# Build the project
 DEPLOYMENT_FILE_LOCATION=${SRC_DIR}/.deployment
 if [ -n "$PROJECT" ]; then
 	PROJECT_JSON_FILE=${SRC_DIR}/${PROJECT}
@@ -109,32 +108,32 @@ else
 fi
 echo "Building ${PROJECT_JSON_FILE}"
 
-export DNU_LOCAL_CACHE="/app/.local/share/dnu"
-export DNU_CACHE_LOCATION="${CACHE_DIR}/dnu/cache"
-mkdir -p ${DNU_LOCAL_CACHE}
-mkdir -p ${DNU_CACHE_LOCATION}
-ln -s ${DNU_CACHE_LOCATION} ${DNU_LOCAL_CACHE}/cache 
+export NUGET_PACKAGES="${CACHE_DIR}/nuget/cache"
+dotnet restore ${PROJECT_JSON_FILE}
 
-dnu restore $DNU_FLAGS ${PROJECT_JSON_FILE}
+dotnet publish ${PROJECT_JSON_FILE} --output ${BUILD_DIR} --runtime ubuntu.14.04-x64 --configuration Release 
 
-dnu publish --out ${BUILD_DIR} $DNU_FLAGS --no-source --configuration Release ${PROJECT_JSON_FILE}
 
-# Clean out core-stuff that we don't need in the slug
-find ${BUILD_DIR} -iname dnxcore50 -print0 | xargs -r -0 rm --
+# Get libuv
+LIBUV_CACHE_LOCATION=${CACHE_DIR}/libuv/${LIBUV_VERSION}
+if [ ! -d ${LIBUV_CACHE_LOCATION} ]; then
+	rm -rf ${CACHE_DIR}/libuv/* || true
+	mkdir -p ${LIBUV_CACHE_LOCATION}
 
-mkdir -p ${BUILD_DIR}/.profile.d
-cp -n ${BUILDPACK_DIR}/.profile.d/* ${BUILD_DIR}/.profile.d/
+	echo "Downloading libuv version ${LIBUV_VERSION}"
+	curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -sSL \
+	 | tar xz -C ${LIBUV_CACHE_LOCATION}
+fi
+cp -r ${LIBUV_CACHE_LOCATION}/libuv ${BUILD_DIR}
+cat <<EOF >$BUILD_DIR/.profile.d/000_libuv.sh
+export LD_LIBRARY_PATH="\$HOME/libuv/lib:\$LD_LIBRARY_PATH"
+EOF
 
-curl https://github.com/friism/libuv-builder/releases/download/v${LIBUV_VERSION}/libuv-${LIBUV_VERSION}.tar.gz -sL \
-	 | tar xz -C ${BUILD_DIR}
+# TODO: read Procfile from `commands` in project.json
 if [ -e ${SRC_DIR}/Procfile ]; then
 	cp ${SRC_DIR}/Procfile ${BUILD_DIR}
 else
-	ROOTS=`cd ${BUILD_DIR}; find approot/packages/ -name root`
-	if [ $( echo "${ROOTS}" | wc -l ) -gt 0 ]; then
-	APP_ROOT=$(echo "$ROOTS" | head -1)
 	cat << EOT >> ${BUILD_DIR}/Procfile
-web: ./kestrel --server.urls http://+:\$PORT
+web: ASPNETCORE_URLS='http://+:\$PORT' dotnet ./app.dll --urls http://+:\$PORT
 EOT
-	fi
 fi
